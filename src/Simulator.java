@@ -95,12 +95,14 @@ public class Simulator {
 
             System.out.println("Starting cook at " + temp + " degrees fahrenheit for " + cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
             //Start a timer for cooktime
-            int startTime;
-            int currentTime = startTime = (int)System.currentTimeMillis()/1000;
+            int startTime = (int)System.currentTimeMillis()/1000;
             //Turn on all the stuff
             //Watch interrupts while timer runs
             //At interrupt, pause
             //At timer finish, stop and reset
+            /**while( ((int)System.currentTimeMillis()/1000)-startTime <= cookTime){
+
+             }**/
             return true;
         }
     }
