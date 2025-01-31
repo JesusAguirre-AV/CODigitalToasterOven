@@ -8,8 +8,10 @@
     import javafx.scene.layout.*;
     import javafx.scene.paint.Color;
     import javafx.scene.shape.Rectangle;
+    import javafx.scene.text.Text;
     import javafx.stage.Stage;
-     
+    import org.w3c.dom.css.Rect;
+
     public class FXdeviceSimulator extends Application {
         private int toasterHeight = 500;
         private int toasterMainSectionWidth = 700;
