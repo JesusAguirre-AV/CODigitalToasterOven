@@ -100,9 +100,23 @@ public class Simulator {
             //Watch interrupts while timer runs
             //At interrupt, pause
             //At timer finish, stop and reset
-            /**while( ((int)System.currentTimeMillis()/1000)-startTime <= cookTime){
+            tempSensorThread tempRunner = new tempSensorThread();
+            pauseButtonSensor pauseRunner = new pauseButtonSensor();
+            timerThread timerRunner = new timerThread();
+            powerCheckThread powerRunner = new powerCheckThread();
 
-             }**/
+            tempRunner.start();
+            pauseRunner.start();
+            timerRunner.start();
+            powerRunner.start();
+
+            while (powerIsOn && !doorIsOpen && !timerRunner.timeUp(startTime, cookTime)){}
+
+            tempRunner.terminate();
+            pauseRunner.terminate();
+            timerRunner.terminate();
+            powerRunner.terminate();
+
             return true;
         }
     }
@@ -165,6 +179,38 @@ public class Simulator {
         System.out.println("\nCooking cavity temperature: " + cavityTemp);
         System.out.println("Current cooking info:");
         System.out.println("[" + cookingInfo[0] + ", " + cookingInfo[1] + ", " +  cookingInfo[2] + ", " + cookingInfo[3] + "]");
+    }
+
+    private class parentThread extends Thread{
+        public boolean alive=true;
+        public void terminate(){alive=false;}
+    }
+    private class tempSensorThread extends parentThread{
+        @Override
+        public void run(){
+            while (alive){
+                //calls handle heaters
+            }
+        }
+    }
+    private class pauseButtonSensor extends parentThread{
+    }
+    private class timerThread extends parentThread{
+        public synchronized boolean timeUp(int startTime, int cookTime){
+
+            if(((int)System.currentTimeMillis()/1000)-startTime >= cookTime){
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public void run(){
+
+        }
+    }
+    private class powerCheckThread extends parentThread{
     }
 }
 
