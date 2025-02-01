@@ -1,4 +1,3 @@
-
     import javafx.application.Application;
     import javafx.event.ActionEvent;
     import javafx.event.EventHandler;
@@ -24,22 +23,10 @@
         }
 
 
-
-
         @Override
         public void start(Stage primaryStage) {
             primaryStage.setTitle("Simulator");
-//            Button btn = new Button();
-//            btn.setText("Say 'Hello World'");
-//            btn.setOnAction(new EventHandler<ActionEvent>() {
-//
-//                @Override
-//                public void handle(ActionEvent event) {
-//                    System.out.println("Hello World!");
-//                }
-//            });
 
-            //
             BorderPane root = new BorderPane();
             root.setMaxWidth(1000);
             root.setMaxHeight(1000);
@@ -90,14 +77,64 @@
 
 
 
+            // this is just the right hand section in general
+            VBox rightHandSection = setUpRightHandSection();
+
+            // set up the display section
+            VBox display = setUpDisplay();
+
+            // set up the hbox for the buttons
+            HBox bakeSettingButtons = setUpSettingButtons();
+
+            // set up the button for the preheat
+            HBox prebutton = preHeatButtonSetup();
+
+            // set up the button for the stop/clear
+            HBox stopButtonBox = stopButtonSetup();
+
+            // set up the button for the start
+            HBox startButtonBox = startButtonSetup();
+
+            // set up the triangle increment and decrement
+            VBox triangleButtonsBox = incrementDecrementButtonSetup();
+
+            // now we need to set the power button
+            HBox powerButtonBox = powerButtonSetup();
+
+            // add everything to the rightHandSection
+            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
+                    startButtonBox, triangleButtonsBox, powerButtonBox);
+
+            root.setRight(rightHandSection);
+            root.setCenter(mainSection);
+
+            // just setting the scene and the primary stage
+            primaryStage.setScene(new Scene(root, 700, 500));
+            primaryStage.show();
+        }
+
+        /**
+         * Method to set up the right hand side of the toaster
+         * @return the vbox of the right hand side
+         */
+        private VBox setUpRightHandSection(){
 
             // this is just the right hand section
             VBox rightHandSection = new VBox(30);
             rightHandSection.setPrefWidth(toasterRightSectionWidth);
             rightHandSection.setPrefHeight(toasterHeight);
+            // set the styles of the right hand side
             rightHandSection.setStyle("-fx-border-color: red;");
+            rightHandSection.setStyle("-fx-background-color: darkgray;");
 
+            return rightHandSection;
+        }
 
+        /**
+         * This method defines the display section for our right hand side of the toaster.
+         * @return the vbox for the right hand side
+         */
+        private VBox setUpDisplay(){
             // need to define a new hbox for the time/ temp
             VBox display = new VBox(5);
             HBox displayButtonSegment = new HBox(5);
@@ -118,6 +155,14 @@
             // add onto the vbox the Hbox for the buttons and the text
             display.getChildren().addAll(displayButtonSegment, displayText);
 
+            return display;
+        }
+
+        /**
+         * This method sets up the bake broil and roast buttons for the simulation
+         * @return the HBox of the buttons
+         */
+        private HBox setUpSettingButtons(){
             // in this section we are defining the bake broil and roast
             Button bakeButton = new Button("Bake");
             Button broilButton = new Button("Broil");
@@ -129,6 +174,14 @@
             bakeSettingButtons.setAlignment(Pos.CENTER);
             bakeSettingButtons.setStyle("-fx-border-color: red;");
 
+            return bakeSettingButtons;
+        }
+
+        /**
+         * This method just sets up the pre-heat button for the simulation
+         * @return the HBox with the button
+         */
+        private HBox preHeatButtonSetup(){
             // set up the button for the preheat
             HBox prebutton = new HBox();
             Button preheatButton = new Button("Pre");
@@ -136,6 +189,14 @@
             prebutton.setAlignment(Pos.CENTER);
             prebutton.setStyle("-fx-border-color: red;");
 
+            return prebutton;
+        }
+
+        /**
+         * This method just sets up the stop button for the simulation
+         * @return the HBox with the button
+         */
+        private HBox stopButtonSetup(){
             // set up the button for the stop/clear
             HBox stopButtonBox = new HBox();
             Button stopButton = new Button("Stop/Clear");
@@ -143,6 +204,14 @@
             stopButtonBox.setAlignment(Pos.CENTER);
             stopButtonBox.setStyle("-fx-border-color: red;");
 
+            return stopButtonBox;
+        }
+
+        /**
+         * This method just sets up the stop button for the simulation
+         * @return the HBox with the button
+         */
+        private HBox startButtonSetup(){
             // set up the button for the start
             HBox startButtonBox = new HBox();
             Button startButton = new Button("Start");
@@ -150,6 +219,14 @@
             startButtonBox.setAlignment(Pos.CENTER);
             startButtonBox.setStyle("-fx-border-color: red;");
 
+            return startButtonBox;
+        }
+
+        /**
+         * This method just sets up the triangle increment/ decrement button for the simulation
+         * @return the HBox with the button
+         */
+        private VBox incrementDecrementButtonSetup(){
             // set up the triangle increment and decrement
             VBox triangleButtonsBox = new VBox(5);
             Polygon triangleIncrement = new Polygon(0, 50, 50, 50, 25, 0);
@@ -158,6 +235,14 @@
             triangleButtonsBox.setAlignment(Pos.CENTER);
             triangleButtonsBox.setStyle("-fx-border-color: red;");
 
+            return triangleButtonsBox;
+        }
+
+        /**
+         * This method just sets up the power button for the simulation
+         * @return the HBox with the button
+         */
+        private HBox powerButtonSetup(){
             // now we need to set the power button
             HBox powerButtonBox = new HBox();
             Circle powerButton = new Circle(10);
@@ -165,20 +250,6 @@
             powerButtonBox.getChildren().add(powerButton);
             powerButtonBox.setAlignment(Pos.BASELINE_RIGHT);
 
-            // add everything to the rightHandSection
-            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
-                    startButtonBox, triangleButtonsBox, powerButtonBox);
-
-            root.setRight(rightHandSection);
-            root.setCenter(mainSection);
-
-            // just setting the scene and the primary stage
-            primaryStage.setScene(new Scene(root, 700, 500));
-            primaryStage.show();
+            return powerButtonBox;
         }
     }
-
-
-
-
-
