@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+
 public class Simulator {
     //Fields
     boolean powerIsOn = false;
@@ -7,6 +11,21 @@ public class Simulator {
     boolean heatersDead = false;
     boolean isCooking = false;
     boolean bottomHeaterIsOn = false;
+    private SimulatorSocketClient socketClient;
+
+    /**
+     * Constructor that just initializes the new socket object
+     * @param host the host info
+     * @param port the port
+     */
+    public Simulator(String host, int port){
+        try {
+            socketClient = new SimulatorSocketClient(host, port);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     //The live temperature of the cooking cavity
     int cavityTemp = 70;
@@ -34,7 +53,7 @@ public class Simulator {
 
 
     //Method to just toggle everything used as a test method
-    public void testToggles(){
+    public void testToggles() throws IOException {
         this.printInfo();
         togglePower();
         toggleLight();
@@ -45,7 +64,8 @@ public class Simulator {
     }
 
     //Toggle methods for toggleable fields
-    public void togglePower() {
+    public void togglePower() throws IOException {
+        socketClient.sendMessage(1);
         powerIsOn = !powerIsOn;
         System.out.print("Turned power ");
         if(powerIsOn){
@@ -270,7 +290,6 @@ public class Simulator {
         System.out.println("[" + cookingInfo[0] + ", " + cookingInfo[1] + ", " +  cookingInfo[2] + ", " + cookingInfo[3] + "]");
     }
 
-
     private class tempSensorThread extends Thread{
         @Override
         public void run(){
@@ -279,6 +298,7 @@ public class Simulator {
             }
         }
     }
+
     private class pauseButtonSensor extends Thread{
         @Override
         public void run(){
@@ -287,6 +307,7 @@ public class Simulator {
             }
         }
     }
+
     private class timerThread extends Thread{
         int startTime, cookTime;
         timerThread(int startTime, int cookTime){
@@ -309,6 +330,9 @@ public class Simulator {
             }
         }
     }
+
+
+
     public class doorThread extends Thread{
         @Override
         public void run(){
