@@ -9,7 +9,6 @@ public class SimulatorSocketClient {
     public SimulatorSocketClient(String host, int port) throws IOException {
         socket = new Socket(host, port);
         out = new ObjectOutputStream(socket.getOutputStream());
-
     }
 
     /**

@@ -1,3 +1,5 @@
+    import javafx.animation.FadeTransition;
+    import javafx.animation.FillTransition;
     import javafx.application.Application;
     import javafx.beans.binding.Bindings;
     import javafx.beans.property.SimpleIntegerProperty;
@@ -8,16 +10,17 @@
     import javafx.scene.control.Button;
     import javafx.scene.control.Label;
     import javafx.scene.effect.BlendMode;
+    import javafx.scene.image.Image;
     import javafx.scene.layout.*;
-    import javafx.scene.paint.Color;
-    import javafx.scene.paint.CycleMethod;
-    import javafx.scene.paint.LinearGradient;
-    import javafx.scene.paint.Stop;
+    import javafx.scene.paint.*;
     import javafx.scene.shape.Circle;
     import javafx.scene.shape.Polygon;
     import javafx.scene.shape.Rectangle;
+    import javafx.scene.text.Font;
+    import javafx.scene.text.FontWeight;
     import javafx.scene.text.Text;
     import javafx.stage.Stage;
+    import javafx.util.Duration;
     import org.w3c.dom.css.Rect;
 
     import java.io.IOException;
@@ -25,25 +28,28 @@
     import java.net.ServerSocket;
     import java.net.Socket;
     import java.security.KeyStore;
+    import java.util.Objects;
+    import java.util.Set;
 
     public class FXdeviceSimulator extends Application {
         private int toasterHeight = 500;
         private int toasterMainSectionWidth = 700;
         private int toasterRightSectionWidth = 200;
         private int totalToasterWidth = 700;
-        private SimpleIntegerProperty currentTimeMinutes = new SimpleIntegerProperty(0);
-        private SimpleIntegerProperty currentTimeSeconds = new SimpleIntegerProperty(0);
-        private SimpleIntegerProperty currentTempF = new SimpleIntegerProperty(0);
         private boolean isPowerOn = false;
         private boolean isOnTemp = false;
         private boolean isOnTime = false;
-        private int timesPressed = 0;
-        private Circle powerButton;
-        private Circle lightButton;
         private boolean isTopHeaterOn = false;
         private boolean isBottomHeaterOn = false;
         private boolean isLightOn = false;
         private boolean doorStatus = false;
+        private int timesPressed = 0;
+        private Circle powerButton;
+        private Circle lightButton;
+        private SimpleIntegerProperty currentTimeMinutes = new SimpleIntegerProperty(0);
+        private SimpleIntegerProperty currentTimeSeconds = new SimpleIntegerProperty(0);
+        private SimpleIntegerProperty currentTempF = new SimpleIntegerProperty(0);
+
         Rectangle window = setupWindow();
 
         private enum setting{
@@ -56,12 +62,9 @@
         //Set the heaters
         private Rectangle [] heaters = setupHeaters();
 
+
         public static void main(String[] args) {
-
-
             launch(args);
-
-
         }
 
         private void setUpServerSocket(){
@@ -120,7 +123,10 @@
                         }
                     }
 
-                    case 4 -> toggleLight(); // toggle light
+                    case 4 -> {
+                        System.out.println("Got a message to turn on the light ");
+                        toggleLight(); // toggle light
+                    }
                     case 5 -> toggleDoor(); // toggle door sensor
                     case 6 -> System.out.println("Got a message 6"); // temperature?
                     case 7 -> System.out.println("Got a message 7"); // time? maybe?
@@ -176,7 +182,7 @@
             VBox triangleButtonsBox = incrementDecrementButtonSetup();
 
             // now we need to set the power button
-            HBox powerButtonBox = powerAndLightButtonSetup();
+            VBox powerButtonBox = powerAndLightButtonSetup();
 
             // add everything to the rightHandSection
             rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
@@ -243,6 +249,11 @@
             setupHandleCLick(handle);
             return handle;
         }
+
+        /**
+         * Method to handle the handle click
+         * @param handle the handle
+         */
         private void setupHandleCLick(Rectangle handle){
             handle.setOnMouseClicked(event -> {
                 if(doorStatus){
@@ -273,7 +284,7 @@
                     false, CycleMethod.NO_CYCLE, stops);
 
             tray.setFill(lg1);
-            tray.setBlendMode(BlendMode.DARKEN);
+//            tray.setBlendMode(BlendMode.DARKEN);
          //  tray.setFill((Color.BLACK));
                 //      tray.setStroke(Color.BLACK);
             return tray;
@@ -306,8 +317,8 @@
             rightHandSection.setPrefWidth(toasterRightSectionWidth);
             rightHandSection.setPrefHeight(toasterHeight);
             // set the styles of the right hand side
-            rightHandSection.setStyle("-fx-border-color: red;");
-            rightHandSection.setStyle("-fx-background-color: darkgray;");
+            rightHandSection.setStyle("-fx-border-color: black;");
+            rightHandSection.setStyle("-fx-background-color: darkGray;");
 
             return rightHandSection;
         }
@@ -322,17 +333,26 @@
             HBox displayButtonSegment = new HBox(5);
             displayButtonSegment.setPrefHeight(30);
             displayButtonSegment.setPrefWidth(10);
-            display.setStyle("-fx-border-color: red;");
+
+            display.setStyle("-fx-border-color: black;");
+
 
             // adding the buttons to the display and we also needthe text
             Button timeButton = new Button("Time");
+            timeButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            timeButton.setStyle("-fx-border-color: black");
+
             Button tempButton = new Button("Temp");
+            tempButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            tempButton.setStyle("-fx-border-color: black");
+
             Label displayText = new Label();
             displayText.textProperty().bind(Bindings.concat(
                     currentTimeMinutes.asString("%02d"),
                     ":",currentTimeSeconds.asString("%02d"), "    ",
                     currentTempF.asString("%02d"), " F°"
             ));
+            displayText.setStyle("-fx-font-family: 'Comic Sans MS'");
 //            displayText.textProperty().bind(
 //                    Bindings.concat(
 //                    currentTimeMinutes.asString("%02d"),
@@ -429,6 +449,17 @@
             Button broilButton = new Button("Broil");
             Button roastButton = new Button("Roast");
 
+            bakeButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            bakeButton.setStyle("-fx-border-color: black");
+
+            broilButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            broilButton.setStyle("-fx-border-color: black");
+
+            roastButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            roastButton.setStyle("-fx-border-color: black");
+
+
+
             handleBakeButtonClick(bakeButton);
             handleBroilButtonClick(broilButton);
             handleRoastButtonClick(roastButton);
@@ -437,7 +468,7 @@
             HBox bakeSettingButtons = new HBox(5);
             bakeSettingButtons.getChildren().addAll(bakeButton, broilButton, roastButton);
             bakeSettingButtons.setAlignment(Pos.CENTER);
-            bakeSettingButtons.setStyle("-fx-border-color: red;");
+            bakeSettingButtons.setStyle("-fx-border-color: black;");
 
             return bakeSettingButtons;
         }
@@ -482,26 +513,38 @@
          */
         private HBox preHeatButtonSetup(){
             // set up the button for the preheat function
-            HBox prebutton = new HBox();
-            Button preheatButton = new Button("Pre");
+            Button pizza = new Button("Pizza");
+            Button nuggets= new Button("Nuggets");
+
+            pizza.setStyle("-fx-font-family: 'Comic Sans MS'");
+            pizza.setStyle("-fx-border-color: black");
+            nuggets.setStyle("-fx-font-family: 'Comic Sans MS'");
+            nuggets.setStyle("-fx-border-color: black");
 
             // handle the mouse clicks
-            handlePreButtonClick(preheatButton);
-
-            prebutton.getChildren().add(preheatButton);
+            handlePreButtonClick(pizza,nuggets);
+            HBox prebutton = new HBox(5);
+            prebutton.getChildren().addAll(pizza,nuggets);
             prebutton.setAlignment(Pos.CENTER);
-            prebutton.setStyle("-fx-border-color: red;");
+            prebutton.setStyle("-fx-border-color: black;");
 
             return prebutton;
         }
 
         /**
          * Method to handle the click on the pre-het button on our simulation
-         * @param preButton the time button
+         * @param pizza and nuggets the time button
          */
-        private void handlePreButtonClick(Button preButton){
-            preButton.setOnMouseClicked(event -> {
-                System.out.println("Clicked on the pre-heat button");
+        private void handlePreButtonClick(Button pizza,Button nuggets){
+            pizza.setOnMouseClicked(event -> {
+                sett = setting.BAKE;
+                currentTimeMinutes.set(15);
+                currentTempF.set(375);
+            });
+            nuggets.setOnMouseClicked(event -> {
+                sett = setting.ROAST;
+                currentTimeMinutes.set(10);
+                currentTempF.set(400);
             });
         }
 
@@ -514,11 +557,14 @@
             HBox stopButtonBox = new HBox();
             Button stopButton = new Button("Stop/Clear");
 
+            stopButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            stopButton.setStyle("-fx-border-color: black");
+
             // handle the mouse clicks
             handleStopButtonClick(stopButton);
             stopButtonBox.getChildren().add(stopButton);
             stopButtonBox.setAlignment(Pos.CENTER);
-            stopButtonBox.setStyle("-fx-border-color: red;");
+            stopButtonBox.setStyle("-fx-border-color: black;");
             return stopButtonBox;
         }
 
@@ -551,12 +597,16 @@
             HBox startButtonBox = new HBox();
             Button startButton = new Button("Start");
 
+            startButton.setStyle("-fx-font-family: 'Comic Sans MS'");
+            startButton.setStyle("-fx-border-color: black");
+//            startButton.setStyle("-fx-background-color: silver");
+
             // handle the mouse clicks
             handleStartButtonClick(startButton);
 
             startButtonBox.getChildren().add(startButton);
             startButtonBox.setAlignment(Pos.CENTER);
-            startButtonBox.setStyle("-fx-border-color: red;");
+            startButtonBox.setStyle("-fx-border-color: black;");
 
             return startButtonBox;
         }
@@ -573,34 +623,77 @@
                         toggleBottomHeaterOn();
                     }
                     case BAKE -> {
-                        toggleTopHeaterOn();
-                        toggleBottomHeaterOff();
-                    }
-                    case BROIL -> {
                         toggleTopHeaterOff();
                         toggleBottomHeaterOn();
+                    }
+                    case BROIL -> {
+                        toggleTopHeaterOn();
+                        toggleBottomHeaterOff();
                     }
                 }
                 System.out.println("Clicked on the start button");
             });
         }
 
+        /**
+         * Method to toggle the top heater on
+         */
         private void toggleTopHeaterOn(){
-            heaters[0].setFill(Color.RED);
-            isTopHeaterOn = true;
+           if(heaters[0].getFill() == Color.BLACK) {
+               FillTransition ft = new FillTransition(Duration.seconds(6), heaters[0], Color.BLACK, Color.RED);
+               ft.setCycleCount(0);
+               ft.setAutoReverse(false);
+               ft.play();
+           }else{
+               heaters[0].setFill(Color.RED);
+           }
+           isTopHeaterOn = true;
         }
 
+        /**
+         * Method to toggle the bottom heater on
+         */
         private void toggleBottomHeaterOn(){
-            heaters[1].setFill(Color.RED);
+
+            if(heaters[1].getFill() == Color.BLACK) {
+                FillTransition ft = new FillTransition(Duration.seconds(6), heaters[1], Color.BLACK, Color.RED);
+                ft.setCycleCount(0);
+                ft.setAutoReverse(false);
+                ft.play();
+
+            }else{
+                heaters[1].setFill(Color.RED);
+            }
             isBottomHeaterOn = true;
         }
+
+        /**
+         * Method to toggle the top heater off
+         */
         private void toggleTopHeaterOff(){
-            heaters[0].setFill(Color.BLACK);
+            if(heaters[0].getFill() == Color.RED) {
+                FillTransition ft = new FillTransition(Duration.seconds(6), heaters[0], Color.RED, Color.BLACK);
+                ft.setCycleCount(0);
+                ft.setAutoReverse(false);
+                ft.play();
+            }else{
+                heaters[0].setFill(Color.BLACK);
+            }
             isTopHeaterOn = false;
         }
 
+        /**
+         * Method to toggle the bottom heater off
+         */
         private void toggleBottomHeaterOff(){
-            heaters[1].setFill(Color.BLACK);
+            if(heaters[1].getFill() == Color.RED) {
+                FillTransition ft = new FillTransition(Duration.seconds(6), heaters[1], Color.RED, Color.BLACK);
+                ft.setCycleCount(0);
+                ft.setAutoReverse(false);
+                ft.play();
+            }else{
+                heaters[1].setFill(Color.BLACK);
+            }
             isBottomHeaterOn = false;
         }
 
@@ -614,13 +707,22 @@
             Polygon triangleIncrement = new Polygon(0, 50, 50, 50, 25, 0);
             Polygon triangleDecrement = new Polygon(0, 0, 50, 0, 25, 50);
 
+            Image image = new Image(Objects.requireNonNull(getClass().getResource("add-icon3.PNG")).toExternalForm());
+            Image image2 = new Image(Objects.requireNonNull(getClass().getResource("subtract-icon1.PNG")).toExternalForm());
+
+            triangleIncrement.setStyle("-fx-border-color: white");
+            triangleDecrement.setStyle("-fx-border-color: white");
+
+            triangleDecrement.setFill(new ImagePattern(image2));
+            triangleIncrement.setFill(new ImagePattern(image));
+
             // handle the mouse clicks
             handleIncrementButtonClick(triangleIncrement);
             handleDecrementButtonClick(triangleDecrement);
 
             triangleButtonsBox.getChildren().addAll(triangleIncrement, triangleDecrement);
             triangleButtonsBox.setAlignment(Pos.CENTER);
-            triangleButtonsBox.setStyle("-fx-border-color: red;");
+            triangleButtonsBox.setStyle("-fx-border-color: black;");
 
             return triangleButtonsBox;
         }
@@ -673,9 +775,20 @@
          * This method just sets up the power button for the simulation
          * @return the HBox with the button
          */
-        private HBox powerAndLightButtonSetup(){
+        private VBox powerAndLightButtonSetup(){
+
             // now we need to set the power button
-            HBox powerButtonBox = new HBox(175);
+            VBox powerButtonBox = new VBox(5);
+
+            // hboxes for the buttons
+            HBox powerButtonThing = new HBox(5);
+            HBox lightButtonThing = new HBox(11);
+
+            // text for the power/ light button
+            Text powerText = new Text("Power");
+            Text lightText = new Text("Light");
+
+            // circles for the buttons
             powerButton = new Circle(10);
             lightButton = new Circle(10);
 
@@ -683,9 +796,17 @@
             handlePowerButtonClicks(powerButton);
             handleLightButtonClicks(lightButton);
 
-            powerButtonBox.setStyle("-fx-border-color: red;");
-            powerButtonBox.getChildren().addAll(lightButton, powerButton);
-            powerButtonBox.setAlignment(Pos.BASELINE_RIGHT);
+            // add the button and the
+            powerButtonThing.getChildren().addAll(powerButton, powerText);
+            lightButtonThing.getChildren().addAll(lightButton, lightText);
+
+            // set the alignment of the HBoxes to the center
+            powerButtonThing.setAlignment(Pos.CENTER);
+            lightButtonThing.setAlignment(Pos.CENTER);
+
+            powerButtonBox.setStyle("-fx-border-color: black;");
+            powerButtonBox.getChildren().addAll(powerButtonThing, lightButtonThing);
+            powerButtonBox.setAlignment(Pos.CENTER);
 
             return powerButtonBox;
         }
@@ -750,6 +871,11 @@
             }
             timesPressed = 0;
         }
+
+        /**
+         * Method to simulate pressing the lightButton
+         * @param lightButton the light button
+         */
         private void pressLight(Circle lightButton){
             if(isLightOn){
                 lightButton.setFill(Color.GREEN);
@@ -765,7 +891,7 @@
          * Method to turn on/off the light depending on the message from socket.
          */
         private void toggleLight(){
-            if (isLightOn) {
+            if (!isLightOn) {
                 window.setFill(Color.LIGHTYELLOW);
                 isLightOn = false;
             }else
@@ -774,6 +900,10 @@
                 isLightOn = true;
             }
         }
+
+        /**
+         * Method to toggle the door
+         */
         private void toggleDoor(){
             if(doorStatus){
                 System.out.println("Door is now Closed");

@@ -2,7 +2,7 @@ import java.io.IOException;
 
 public class Main {
     //Main will serve to test the toaster oven simulation
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         System.out.println("Hello world!");
         // need to start a thread for the main function that calls functions in the functionality program.
 
@@ -13,6 +13,9 @@ public class Main {
 
         // just testing that we are getting the messages
         simulator.togglePower();
+        simulator.toggleLight();
+
+
 
         // call any methods on this simulator here.
 

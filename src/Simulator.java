@@ -1,9 +1,13 @@
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Simulator {
     //Fields
+    Timer timer = new Timer();
+
     boolean powerIsOn = false;
     boolean lightIsOn = false;
     boolean doorIsOpen = false;
@@ -12,6 +16,33 @@ public class Simulator {
     boolean isCooking = false;
     boolean bottomHeaterIsOn = false;
     public SimulatorSocketClient socketClient;
+    TimerTask task = new TimerTask() {
+        @Override
+        public void run() {
+            System.out.println("Task is executing...");
+        }
+    };
+
+
+    int cavityTemp = 70;
+    /**An array of integers that stores 4 ints with the following values
+     * [minutes, seconds, temperature, mode]
+     * Mode key:
+     * 1 - Roast (both heaters)
+     * 2 - Bake (bottom heater)
+     * 3 - Broil (top heater)
+     */
+    int cookingInfo[] = new int[4];
+    /**
+     * An array of booleans that shows which heater will be used during the cook.
+     * The first element represents the top heater and the second element represents the bottom heater
+     */
+    boolean heatersUsed[] = new boolean[2];
+    /**
+     * Booleans relevant to the threads
+     * */
+    boolean threadLive=false;
+    boolean stopButtonPressed=false;
 
     /**
      * Constructor that just initializes the new socket object
@@ -24,34 +55,10 @@ public class Simulator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 
 
-
-
-    //The live temperature of the cooking cavity
-    int cavityTemp = 70;
-    /**An array of integers that stores 4 ints with the following values
-     * [minutes, seconds, temperature, mode]
-     * Mode key:
-     * 1 - Roast (both heaters)
-     * 2 - Bake (bottom heater)
-     * 3 - Broil (top heater)
-     */
-    int cookingInfo[] = new int[4];
-
-    /**
-     * An array of booleans that shows which heater will be used during the cook.
-     * The first element represents the top heater and the second element represents the bottom heater
-     */
-    boolean heatersUsed[] = new boolean[2];
-    /**
-     * Booleans relevant to the threads
-     * */
-    boolean threadLive=false;
-    boolean stopButtonPressed=false;
-
-    //No explicitly defined constructor needed since only one will be made.
 
 
     //Method to just toggle everything used as a test method
@@ -68,6 +75,7 @@ public class Simulator {
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
         socketClient.sendMessage(1);
+
         powerIsOn = !powerIsOn;
         System.out.print("Turned power ");
         if(powerIsOn){
@@ -77,7 +85,9 @@ public class Simulator {
             System.out.println("off");
         }
     }
-    public void toggleLight(){
+    public void toggleLight() throws IOException {
+        socketClient.sendMessage(4);
+
         lightIsOn = !lightIsOn;
         System.out.print("Turned light ");
         if(lightIsOn){
@@ -87,7 +97,8 @@ public class Simulator {
             System.out.println("off.");
         }
     }
-    public void toggleDoorSensor(){
+    public void toggleDoorSensor() throws IOException {
+        socketClient.sendMessage(5);
         doorIsOpen = !doorIsOpen;
         if(doorIsOpen){
             System.out.print("Opened ");
@@ -97,7 +108,8 @@ public class Simulator {
         }
         System.out.println("door.");
     }
-    public void toggleTopHeater(){
+    public void toggleTopHeater() throws IOException {
+        socketClient.sendMessage(2);
         if(heatersDead && !topHeaterIsOn){
             System.out.println("Top heater is dead.");
             return;
@@ -111,7 +123,8 @@ public class Simulator {
             System.out.println("off");
         }
     }
-    public void toggleBottomHeater(){
+    public void toggleBottomHeater() throws IOException {
+        socketClient.sendMessage(3);
         if(heatersDead && !bottomHeaterIsOn){
             System.out.println("Bottom heater is dead.");
             return;
@@ -163,7 +176,14 @@ public class Simulator {
     }
 
 
-    public void handleHeaters(){
+    /**
+     * Method to handle the temperature in the oven and turn on/off the heaters.
+     * If the cavity temperature exceeds 500 degrees, then the heaters are killed.
+     * If the temperature is below the set temperature, turn on the heaters
+     * If the temperature is above the set temperature, turn off the heaters
+     * @throws IOException
+     */
+    public void handleHeaters() throws IOException {
         if(cavityTemp >= 500){
             heatersDead = true;
             topHeaterIsOn = false;
@@ -192,6 +212,10 @@ public class Simulator {
         }
     }
 
+    /**
+     * Stops the cook, but doesn't reset the time or anything
+     * Saves the time left on the timer and the temperature.
+     */
     public synchronized void stopCooking(){
         stopButtonPressed=false;
         threadLive=false;
@@ -206,17 +230,37 @@ public class Simulator {
         cookingInfo[1] = cookTime%60;
     }
 
-    public void resetOven(){
+    /**
+     * Resets the oven
+     * @throws IOException
+     */
+    public void resetOven() throws IOException {
         stop();
         toggleLight();
         cookingInfo = new int[4];
     }
 
-
+    /**
+     * Method to start the cook
+     * @param temp
+     * @param cookTime
+     */
     public void startCooking(int temp, int cookTime){
-        System.out.println("Starting cook at " + temp + " degrees fahrenheit for " + cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
-        //Start a timer for cooktime
+        System.out.println("Starting cook at " + temp + " degrees fahrenheit" +
+                " for " +
+                cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
+
+        timer.scheduleAtFixedRate(task, 0, 1000);
         int startTime = (int)System.currentTimeMillis()/1000;
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Cancelling the task after " + cookTime + " seconds.");
+                timer.cancel();
+            }
+        }, cookTime*1000);
+
         //Turn on all the stuff
         //Watch interrupts while timer runs
         //At interrupt, pause
@@ -234,7 +278,9 @@ public class Simulator {
         pauseRunner.start();
     }
 
-
+    /**
+     * Method to stop the cook, but save the time and the temperature
+     */
     public void stop(){
         threadLive=false;
         boolean lightIsOn = false;
@@ -296,7 +342,11 @@ public class Simulator {
         @Override
         public void run(){
             while (threadLive){
-                handleHeaters();
+                try {
+                    handleHeaters();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
@@ -327,7 +377,11 @@ public class Simulator {
         public void run(){
             while (threadLive){
                 if(!timeUp()){
-                    resetOven();
+                    try {
+                        resetOven();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
