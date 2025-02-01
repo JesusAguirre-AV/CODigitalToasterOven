@@ -7,6 +7,8 @@
     import javafx.scene.control.Button;
     import javafx.scene.layout.*;
     import javafx.scene.paint.Color;
+    import javafx.scene.shape.Circle;
+    import javafx.scene.shape.Polygon;
     import javafx.scene.shape.Rectangle;
     import javafx.scene.text.Text;
     import javafx.stage.Stage;
@@ -84,7 +86,7 @@
 
 
             // this is just the right hand section
-            VBox rightHandSection = new VBox(10);
+            VBox rightHandSection = new VBox(30);
             rightHandSection.setPrefWidth(toasterRightSectionWidth);
             rightHandSection.setPrefHeight(toasterHeight);
             rightHandSection.setStyle("-fx-border-color: red;");
@@ -119,27 +121,47 @@
             HBox bakeSettingButtons = new HBox(5);
             bakeSettingButtons.getChildren().addAll(bakeButton, broilButton, roastButton);
             bakeSettingButtons.setAlignment(Pos.CENTER);
+            bakeSettingButtons.setStyle("-fx-border-color: red;");
 
             // set up the button for the preheat
             HBox prebutton = new HBox();
             Button preheatButton = new Button("Pre");
             prebutton.getChildren().add(preheatButton);
             prebutton.setAlignment(Pos.CENTER);
+            prebutton.setStyle("-fx-border-color: red;");
 
             // set up the button for the stop/clear
             HBox stopButtonBox = new HBox();
             Button stopButton = new Button("Stop/Clear");
             stopButtonBox.getChildren().add(stopButton);
             stopButtonBox.setAlignment(Pos.CENTER);
+            stopButtonBox.setStyle("-fx-border-color: red;");
 
             // set up the button for the start
             HBox startButtonBox = new HBox();
             Button startButton = new Button("Start");
             startButtonBox.getChildren().add(startButton);
             startButtonBox.setAlignment(Pos.CENTER);
+            startButtonBox.setStyle("-fx-border-color: red;");
+
+            // set up the triangle increment and decrement
+            VBox triangleButtonsBox = new VBox(5);
+            Polygon triangleIncrement = new Polygon(0, 50, 50, 50, 25, 0);
+            Polygon triangleDecrement = new Polygon(0, 0, 50, 0, 25, 50);
+            triangleButtonsBox.getChildren().addAll(triangleIncrement, triangleDecrement);
+            triangleButtonsBox.setAlignment(Pos.CENTER);
+            triangleButtonsBox.setStyle("-fx-border-color: red;");
+
+            // now we need to set the power button
+            HBox powerButtonBox = new HBox();
+            Circle powerButton = new Circle(10);
+            powerButtonBox.setStyle("-fx-border-color: red;");
+            powerButtonBox.getChildren().add(powerButton);
+            powerButtonBox.setAlignment(Pos.BASELINE_RIGHT);
 
             // add everything to the rightHandSection
-            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox, startButtonBox);
+            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
+                    startButtonBox, triangleButtonsBox, powerButtonBox);
 
             root.setRight(rightHandSection);
             root.setCenter(mainSection);

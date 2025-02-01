@@ -22,7 +22,5 @@ public class Main {
         // call any methods on this simulator here.
 
 
-
-
     }
 }
