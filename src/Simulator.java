@@ -24,6 +24,11 @@ public class Simulator {
      * The first element represents the top heater and the second element represents the bottom heater
      */
     boolean heatersUsed[] = new boolean[2];
+    /**
+     * Booleans relevant to the threads
+     * */
+    boolean threadLive=false;
+    boolean stopButtonPressed=false;
 
     //No explicitly defined constructor needed since only one will be made.
 
@@ -131,8 +136,6 @@ public class Simulator {
             }
 
 
-
-
             return true;
         }
     }
@@ -167,7 +170,9 @@ public class Simulator {
         }
     }
 
-    public void stopCooking(){
+    public synchronized void stopCooking(){
+        stopButtonPressed=false;
+        threadLive=false;
         topHeaterIsOn = false;
         bottomHeaterIsOn = false;
         lightIsOn = true;
@@ -194,13 +199,22 @@ public class Simulator {
         //Watch interrupts while timer runs
         //At interrupt, pause
         //At timer finish, stop and reset
-        /**while( ((int)System.currentTimeMillis()/1000)-startTime <= cookTime){
-*
-         }**/
+
+        //setting up threads to run and cook
+        threadLive=true;
+
+        timerThread timerRunner = new timerThread(startTime, cookTime);
+        tempSensorThread tempRunner = new tempSensorThread();
+        pauseButtonSensor pauseRunner = new pauseButtonSensor();
+
+        timerRunner.start();
+        tempRunner.start();
+        pauseRunner.start();
     }
 
 
     public void stop(){
+        threadLive=false;
         boolean lightIsOn = false;
         boolean doorIsClosed = true;
         boolean topHeaterIsOn = false;
@@ -256,36 +270,52 @@ public class Simulator {
         System.out.println("[" + cookingInfo[0] + ", " + cookingInfo[1] + ", " +  cookingInfo[2] + ", " + cookingInfo[3] + "]");
     }
 
-    private class parentThread extends Thread{
-        public boolean alive=true;
-        public void terminate(){alive=false;}
-    }
-    private class tempSensorThread extends parentThread{
+
+    private class tempSensorThread extends Thread{
         @Override
         public void run(){
-            while (alive){
-                //calls handle heaters
+            while (threadLive){
+                handleHeaters();
             }
         }
     }
-    private class pauseButtonSensor extends parentThread{
+    private class pauseButtonSensor extends Thread{
+        @Override
+        public void run(){
+            while (threadLive){
+                if(stopButtonPressed){stopCooking();}
+            }
+        }
     }
-    private class timerThread extends parentThread{
-        public synchronized boolean timeUp(int startTime, int cookTime){
-
+    private class timerThread extends Thread{
+        int startTime, cookTime;
+        timerThread(int startTime, int cookTime){
+            this.startTime=startTime;
+            this.cookTime=cookTime;
+        }
+        public synchronized boolean timeUp(){
             if(((int)System.currentTimeMillis()/1000)-startTime >= cookTime){
                 return true;
             }
-
             return false;
         }
 
         @Override
         public void run(){
-
+            while (threadLive){
+                if(!timeUp()){
+                    resetOven();
+                }
+            }
         }
     }
-    private class powerCheckThread extends parentThread{
+    public class doorThread extends Thread{
+        @Override
+        public void run(){
+            while (threadLive){
+                if(doorIsOpen){stopCooking();}
+            }
+        }
     }
 }
 
