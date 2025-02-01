@@ -11,7 +11,7 @@ public class Simulator {
     boolean heatersDead = false;
     boolean isCooking = false;
     boolean bottomHeaterIsOn = false;
-    private SimulatorSocketClient socketClient;
+    public SimulatorSocketClient socketClient;
 
     /**
      * Constructor that just initializes the new socket object
@@ -25,6 +25,8 @@ public class Simulator {
             throw new RuntimeException(e);
         }
     }
+
+
 
 
     //The live temperature of the cooking cavity

@@ -7,8 +7,12 @@
     import javafx.scene.Scene;
     import javafx.scene.control.Button;
     import javafx.scene.control.Label;
+    import javafx.scene.effect.BlendMode;
     import javafx.scene.layout.*;
     import javafx.scene.paint.Color;
+    import javafx.scene.paint.CycleMethod;
+    import javafx.scene.paint.LinearGradient;
+    import javafx.scene.paint.Stop;
     import javafx.scene.shape.Circle;
     import javafx.scene.shape.Polygon;
     import javafx.scene.shape.Rectangle;
@@ -20,6 +24,7 @@
     import java.io.ObjectInputStream;
     import java.net.ServerSocket;
     import java.net.Socket;
+    import java.security.KeyStore;
 
     public class FXdeviceSimulator extends Application {
         private int toasterHeight = 500;
@@ -29,10 +34,18 @@
         private SimpleIntegerProperty currentTimeMinutes = new SimpleIntegerProperty(0);
         private SimpleIntegerProperty currentTimeSeconds = new SimpleIntegerProperty(0);
         private SimpleIntegerProperty currentTempF = new SimpleIntegerProperty(0);
-        private Boolean isPowerOn = false;
-        private Boolean isOnTemp = false;
-        private Boolean isOnTime = false;
+        private boolean isPowerOn = false;
+        private boolean isOnTemp = false;
+        private boolean isOnTime = false;
         private int timesPressed = 0;
+        private Circle powerButton;
+        private Circle lightButton;
+        private boolean isTopHeaterOn = false;
+        private boolean isBottomHeaterOn = false;
+        private boolean isLightOn = false;
+        private boolean doorStatus = false;
+        Rectangle window = setupWindow();
+
         private enum setting{
             BAKE,
             BROIL,
@@ -40,9 +53,20 @@
             NOSETT
         }
         private setting sett = setting.NOSETT;
+        //Set the heaters
+        private Rectangle [] heaters = setupHeaters();
 
         public static void main(String[] args) {
+
+
+            launch(args);
+
+
+        }
+
+        private void setUpServerSocket(){
             int port = 1234;
+//            System.out.println("Server start");
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 System.out.println("Server listening on port : " + port);
 
@@ -50,21 +74,66 @@
                 System.out.println("Client connected");
 
                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-                Object recievedObject = in.readObject();
+//                Object recievedObject = in.readObject();
 
-                System.out.println("got a message " + (int) recievedObject);
+                // make a thread to listen for and process messages
+
+                processMessages(in);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("Socket Closed");;
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
-            launch(args);
         }
+
+        /**
+         * Method to process certain messages
+         * @param inputStream the input stream
+         * @throws IOException
+         * @throws ClassNotFoundException
+         */
+        private void processMessages(ObjectInputStream inputStream) throws IOException,
+                ClassNotFoundException {
+            while (inputStream != null){
+                int currentMessage = (int) inputStream.readObject();
+                switch (currentMessage){
+                    // toggle power
+                    case 1 -> pressPower(powerButton, isPowerOn, true);
+
+                    // toggle top heater
+                    case 2 -> {
+                        if (!isTopHeaterOn){
+                            toggleTopHeaterOn();
+                        }
+                        else{
+                            toggleTopHeaterOff();
+                        }
+                    }
+                    // toggle bottom heater
+                    case 3 -> {
+                        if (!isBottomHeaterOn){
+                            toggleBottomHeaterOn(); // toggle bottom heater
+                        }
+                        else {
+                            toggleTopHeaterOff();
+                        }
+                    }
+
+                    case 4 -> toggleLight(); // toggle light
+                    case 5 -> toggleDoor(); // toggle door sensor
+                    case 6 -> System.out.println("Got a message 6"); // temperature?
+                    case 7 -> System.out.println("Got a message 7"); // time? maybe?
+                }
+            }
+        }
+
 
 
         @Override
         public void start(Stage primaryStage) {
+            new Thread(() -> setUpServerSocket()).start();
+
             primaryStage.setTitle("Simulator");
 
             BorderPane root = new BorderPane();
@@ -77,17 +146,11 @@
             //Set up the Door.
             Rectangle door = setupDoor();
 
-            //Set the window
-            Rectangle window = setupWindow();
-
             //Set the handle
             Rectangle handle = setupHandle();
 
             //Set the tray
             Rectangle tray = setupTray();
-
-            //Set the heaters
-            Rectangle [] heaters = setupHeaters();
 
             //Adds all the main section elements.
             mainSection.getChildren().addAll(door,window,handle,tray,heaters[0],heaters[1]);
@@ -113,7 +176,7 @@
             VBox triangleButtonsBox = incrementDecrementButtonSetup();
 
             // now we need to set the power button
-            HBox powerButtonBox = powerButtonSetup();
+            HBox powerButtonBox = powerAndLightButtonSetup();
 
             // add everything to the rightHandSection
             rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
@@ -161,7 +224,7 @@
         private Rectangle setupWindow(){
             Rectangle window = new Rectangle(60,60,375,375);
             window.setStroke(Color.BLACK);
-            window.setFill(Color.LIGHTYELLOW);
+            window.setFill(Color.LIGHTGRAY);
             window.setArcHeight(50.0);
             window.setArcWidth(50.0);
             return window;
@@ -177,7 +240,19 @@
             handle.setFill(Color.BLACK);
             handle.setArcHeight(5);
             handle.setArcWidth(5);
+            setupHandleCLick(handle);
             return handle;
+        }
+        private void setupHandleCLick(Rectangle handle){
+            handle.setOnMouseClicked(event -> {
+                if(doorStatus){
+                    System.out.println("Door is now closed");
+                    doorStatus = false;
+                }else{
+                    System.out.println("Door is now open");
+                    doorStatus = true;
+                }
+            });
         }
 
         /**
@@ -186,8 +261,21 @@
          */
         private Rectangle setupTray(){
             Rectangle tray = new Rectangle(60,325,375,20);
-            tray.setFill((Color.SILVER));
-            tray.setStroke(Color.BLACK);
+//            LinearGradient metallicGradient = new LinearGradient(
+//
+//            );
+            Stop[] stops = new Stop[] {
+                    new Stop(0, Color.BLACK),
+                    new Stop(1, Color.BLACK),
+                    new Stop(0.5, Color.DARKGRAY)
+            };
+            LinearGradient lg1 = new LinearGradient(60,325 , 385, 345,
+                    false, CycleMethod.NO_CYCLE, stops);
+
+            tray.setFill(lg1);
+            tray.setBlendMode(BlendMode.DARKEN);
+         //  tray.setFill((Color.BLACK));
+                //      tray.setStroke(Color.BLACK);
             return tray;
         }
 
@@ -464,7 +552,7 @@
             Button startButton = new Button("Start");
 
             // handle the mouse clicks
-            handleStartButtonClick(startButton,heaters);
+            handleStartButtonClick(startButton);
 
             startButtonBox.getChildren().add(startButton);
             startButtonBox.setAlignment(Pos.CENTER);
@@ -477,27 +565,43 @@
          * Method to handle the click on the start button on our simulation
          * @param startButton the time button
          */
-        private void handleStartButtonClick(Button startButton,Rectangle[] heaters){
+        private void handleStartButtonClick(Button startButton){
             startButton.setOnMouseClicked(event -> {
                 switch (sett) {
                     case ROAST -> {
-                        heaters[0].setFill(Color.RED);
-                        heaters[1].setFill(Color.RED);
-                        break;
+                        toggleTopHeaterOn();
+                        toggleBottomHeaterOn();
                     }
                     case BAKE -> {
-                        heaters[0].setFill(Color.RED);
-                        heaters[1].setFill(Color.BLACK);
-                        break;
+                        toggleTopHeaterOn();
+                        toggleBottomHeaterOff();
                     }
                     case BROIL -> {
-                        heaters[0].setFill(Color.BLACK);
-                        heaters[1].setFill(Color.RED);
-                        break;
+                        toggleTopHeaterOff();
+                        toggleBottomHeaterOn();
                     }
                 }
                 System.out.println("Clicked on the start button");
             });
+        }
+
+        private void toggleTopHeaterOn(){
+            heaters[0].setFill(Color.RED);
+            isTopHeaterOn = true;
+        }
+
+        private void toggleBottomHeaterOn(){
+            heaters[1].setFill(Color.RED);
+            isBottomHeaterOn = true;
+        }
+        private void toggleTopHeaterOff(){
+            heaters[0].setFill(Color.BLACK);
+            isTopHeaterOn = false;
+        }
+
+        private void toggleBottomHeaterOff(){
+            heaters[1].setFill(Color.BLACK);
+            isBottomHeaterOn = false;
         }
 
         /**
@@ -569,16 +673,18 @@
          * This method just sets up the power button for the simulation
          * @return the HBox with the button
          */
-        private HBox powerButtonSetup(){
+        private HBox powerAndLightButtonSetup(){
             // now we need to set the power button
-            HBox powerButtonBox = new HBox();
-            Circle powerButton = new Circle(10);
+            HBox powerButtonBox = new HBox(175);
+            powerButton = new Circle(10);
+            lightButton = new Circle(10);
 
             // handle the mouse clicks
             handlePowerButtonClicks(powerButton);
+            handleLightButtonClicks(lightButton);
 
             powerButtonBox.setStyle("-fx-border-color: red;");
-            powerButtonBox.getChildren().add(powerButton);
+            powerButtonBox.getChildren().addAll(lightButton, powerButton);
             powerButtonBox.setAlignment(Pos.BASELINE_RIGHT);
 
             return powerButtonBox;
@@ -590,19 +696,92 @@
          */
         private void handlePowerButtonClicks(Circle powerButton){
             powerButton.setOnMouseClicked(event -> {
-                // TODO: send some info through socket possibly
-                if (isPowerOn){
-                    powerButton.setFill(Color.BLACK);
-                    isPowerOn = false;
-                    System.out.println("Power Off");
-                }
-                else {
-                    powerButton.setFill(Color.GREEN);
-                    isPowerOn = true;
-                    System.out.println("Power On");
-                }
-                timesPressed = 0;
+                pressPower(powerButton, isPowerOn, true);
             });
         }
 
+        /**
+         * Method to handle the click on the power button on our simulation
+         * @param lightButton the time button
+         */
+        private void handleLightButtonClicks(Circle lightButton){
+            lightButton.setOnMouseClicked(event -> {
+                if(!isLightOn)
+                {
+                    isLightOn = true;
+                }else{
+                    isLightOn = false;
+                }
+                pressLight(lightButton);
+            });
+        }
+
+        /**
+         * Method to press the power button
+         * @param powerButton the power button
+         */
+        private void pressPower(Circle powerButton, Boolean isThingON , Boolean isPowerButton){
+            // TODO: send some info through socket possibly
+            if (isThingON){
+                powerButton.setFill(Color.BLACK);
+
+                if (isPowerButton){
+                    isPowerOn = false;
+                }
+                else {
+                    isLightOn = false;
+                    toggleLight();
+                }
+
+                System.out.println("Button Off");
+            }
+            else {
+                powerButton.setFill(Color.GREEN);
+
+                if(isPowerButton){
+                    isPowerOn = true;
+                }
+                else {
+                    isLightOn = true;
+                    toggleLight();
+                }
+
+                System.out.println("Button On");
+            }
+            timesPressed = 0;
+        }
+        private void pressLight(Circle lightButton){
+            if(isLightOn){
+                lightButton.setFill(Color.GREEN);
+                window.setFill(Color.LIGHTYELLOW);
+            }else
+            {
+                lightButton.setFill(Color.BLACK);
+                window.setFill(Color.LIGHTGRAY);
+            }
+        }
+
+        /**
+         * Method to turn on/off the light depending on the message from socket.
+         */
+        private void toggleLight(){
+            if (isLightOn) {
+                window.setFill(Color.LIGHTYELLOW);
+                isLightOn = false;
+            }else
+            {
+                window.setFill(Color.LIGHTGRAY);
+                isLightOn = true;
+            }
+        }
+        private void toggleDoor(){
+            if(doorStatus){
+                System.out.println("Door is now Closed");
+                doorStatus = false;
+            }else
+            {
+                System.out.println("Door is now Open");
+                doorStatus = true;
+            }
+        }
     }

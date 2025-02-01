@@ -7,6 +7,7 @@ public class Main {
         // need to start a thread for the main function that calls functions in the functionality program.
 
 
+
         // create the object of the simulator
         Simulator simulator = new Simulator("localhost", 1234);
 
@@ -16,5 +17,10 @@ public class Main {
         // call any methods on this simulator here.
 
 
+
+
+
+        // close the socket
+        simulator.socketClient.close();
     }
 }
