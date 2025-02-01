@@ -7,6 +7,8 @@
     import javafx.scene.control.Button;
     import javafx.scene.layout.*;
     import javafx.scene.paint.Color;
+    import javafx.scene.shape.Circle;
+    import javafx.scene.shape.Polygon;
     import javafx.scene.shape.Rectangle;
     import javafx.scene.text.Text;
     import javafx.stage.Stage;
@@ -47,44 +49,50 @@
             Pane mainSection = new Pane();
             mainSection.setPrefHeight(toasterHeight);
             mainSection.setPrefWidth(toasterMainSectionWidth);
-            mainSection.setStyle("-fx-border-color: black;");
+            mainSection.setBorder(Border.stroke(Color.BLACK));
+            mainSection.setStyle("-fx-background-color: darkgray;");
             // Set the door
             Rectangle door = new Rectangle(20,20,450,450);
             door.setStroke(Color.BLACK);
-            door.setFill(Color.TRANSPARENT);
+            door.setFill(Color.LIGHTGRAY);
             door.setArcWidth(50.0);
             door.setArcHeight(50.0);
             // Set the window
-            Rectangle window = new Rectangle(100,100,300,300);
+            Rectangle window = new Rectangle(60,60,375,375);
 
-//            window.setStyle("-fx-border-color: black;");
+//          window.setStyle("-fx-border-color: black;");
             window.setStroke(Color.BLACK);
-            window.setFill(Color.TRANSPARENT);
+            window.setFill(Color.LIGHTYELLOW);
             window.setArcHeight(50.0);
             window.setArcWidth(50.0);
 
             //set the handle
-            Rectangle handle = new Rectangle(30,30,300,30);
+            Rectangle handle = new Rectangle(50,35,400,10);
             handle.setStroke(Color.BLACK);
-            handle.setFill(Color.TRANSPARENT);
-            handle.setArcHeight(20);
-            handle.setArcWidth(20);
+            handle.setFill(Color.BLACK);
+            handle.setArcHeight(5);
+            handle.setArcWidth(5);
             //mainSection.getChildren().addAll(door,window,handle);
             //set the try
-            Rectangle tray = new Rectangle(120,120,300,20);
-            tray.setFill((Color.BLACK));
+            Rectangle tray = new Rectangle(60,325,375,20);
+            tray.setFill((Color.SILVER));
+            tray.setStroke(Color.BLACK);
             //set the heater
-            Rectangle heater1 = new Rectangle(100,100,300,10);
-            Rectangle heater2 = new Rectangle(150,150,300,10);
-            heater1.setFill(Color.GRAY);
-            heater2.setFill(Color.GRAY);
+            Rectangle heater1 = new Rectangle(75,60,350,10);
+            Rectangle heater2 = new Rectangle(75,425,350,10);
+            heater1.setFill(Color.RED);
+            heater1.setArcHeight(40.0);
+            heater1.setArcWidth(15.0);
+            heater2.setFill(Color.RED);
+            heater2.setArcHeight(40.0);
+            heater2.setArcWidth(15.0);
             mainSection.getChildren().addAll(door,window,handle,tray,heater1,heater2);
 
 
 
 
             // this is just the right hand section
-            VBox rightHandSection = new VBox(10);
+            VBox rightHandSection = new VBox(30);
             rightHandSection.setPrefWidth(toasterRightSectionWidth);
             rightHandSection.setPrefHeight(toasterHeight);
             rightHandSection.setStyle("-fx-border-color: red;");
@@ -119,27 +127,47 @@
             HBox bakeSettingButtons = new HBox(5);
             bakeSettingButtons.getChildren().addAll(bakeButton, broilButton, roastButton);
             bakeSettingButtons.setAlignment(Pos.CENTER);
+            bakeSettingButtons.setStyle("-fx-border-color: red;");
 
             // set up the button for the preheat
             HBox prebutton = new HBox();
             Button preheatButton = new Button("Pre");
             prebutton.getChildren().add(preheatButton);
             prebutton.setAlignment(Pos.CENTER);
+            prebutton.setStyle("-fx-border-color: red;");
 
             // set up the button for the stop/clear
             HBox stopButtonBox = new HBox();
             Button stopButton = new Button("Stop/Clear");
             stopButtonBox.getChildren().add(stopButton);
             stopButtonBox.setAlignment(Pos.CENTER);
+            stopButtonBox.setStyle("-fx-border-color: red;");
 
             // set up the button for the start
             HBox startButtonBox = new HBox();
             Button startButton = new Button("Start");
             startButtonBox.getChildren().add(startButton);
             startButtonBox.setAlignment(Pos.CENTER);
+            startButtonBox.setStyle("-fx-border-color: red;");
+
+            // set up the triangle increment and decrement
+            VBox triangleButtonsBox = new VBox(5);
+            Polygon triangleIncrement = new Polygon(0, 50, 50, 50, 25, 0);
+            Polygon triangleDecrement = new Polygon(0, 0, 50, 0, 25, 50);
+            triangleButtonsBox.getChildren().addAll(triangleIncrement, triangleDecrement);
+            triangleButtonsBox.setAlignment(Pos.CENTER);
+            triangleButtonsBox.setStyle("-fx-border-color: red;");
+
+            // now we need to set the power button
+            HBox powerButtonBox = new HBox();
+            Circle powerButton = new Circle(10);
+            powerButtonBox.setStyle("-fx-border-color: red;");
+            powerButtonBox.getChildren().add(powerButton);
+            powerButtonBox.setAlignment(Pos.BASELINE_RIGHT);
 
             // add everything to the rightHandSection
-            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox, startButtonBox);
+            rightHandSection.getChildren().addAll(display, bakeSettingButtons, prebutton, stopButtonBox,
+                    startButtonBox, triangleButtonsBox, powerButtonBox);
 
             root.setRight(rightHandSection);
             root.setCenter(mainSection);
