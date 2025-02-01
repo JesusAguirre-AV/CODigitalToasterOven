@@ -214,7 +214,6 @@ public class Simulator {
         return(cookingInfo[0]*60 + cookingInfo[1]);
     }
 
-    public Boolean isCooking(){return false;}
 
     public void printInfo(){
         System.out.print("\n\n\nPower: ");
