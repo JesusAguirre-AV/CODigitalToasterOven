@@ -13,6 +13,7 @@ public class Simulator {
     boolean heatersDead = false;
     boolean bottomHeaterIsOn = false;
     public SimulatorSocketClient socketClient;
+    int cookTime = 0;
     TimerTask task = new TimerTask() {
         @Override
         public void run() {
@@ -92,27 +93,17 @@ public class Simulator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-    }
-
-
-
-
-    //Method to just toggle everything used as a test method
-    public void testToggles() throws IOException {
-        this.printInfo();
-        togglePower();
-        toggleLight();
-        toggleDoorSensor();
-        toggleBottomHeater();
-        toggleTopHeater();
-        this.printInfo();
     }
 
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
-        socketClient.sendMessage(1);
 
+        /**
+         * I think this is where we should start/stop the system thread
+         * -G
+         */
+
+        socketClient.sendMessage(1);
         powerIsOn = !powerIsOn;
         System.out.print("Turned power ");
         if(powerIsOn){
@@ -124,7 +115,6 @@ public class Simulator {
     }
     public void toggleLight() throws IOException {
         socketClient.sendMessage(4);
-
         lightIsOn = !lightIsOn;
         System.out.print("Turned light ");
         if(lightIsOn){
@@ -198,7 +188,7 @@ public class Simulator {
             return false;
         }
         else {
-            int cookTime = convertMinSecToSec();
+            cookTime = convertMinSecToSec();
             int temp = cookingInfo[2];
             if(cookingInfo[3] == 1 || cookingInfo[3] == 2){
                 heatersUsed[1] = true;
@@ -206,8 +196,6 @@ public class Simulator {
             if(cookingInfo[3] == 1 || cookingInfo[3] == 3){
                 heatersUsed[0] = true;
             }
-
-
             return true;
         }
     }
@@ -260,10 +248,6 @@ public class Simulator {
         topHeaterIsOn = false;
         bottomHeaterIsOn = false;
         lightIsOn = true;
-        /** Miguel, this is where I need you to put the saved time whenever stop is called
-         * -Greg
-         */
-        int cookTime = 0;   //timer.getTIME
         cookingInfo[0] = cookTime/60;
         cookingInfo[1] = cookTime%60;
     }
@@ -305,6 +289,10 @@ public class Simulator {
         //At timer finish, stop and reset
 
         //setting up threads to run and cook
+
+        /**
+         * I don't think we need this boolean anymore do we?
+         */
         threadLive=true;
 
         interrupter.start();
