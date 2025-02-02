@@ -19,7 +19,13 @@ public class Simulator {
     TimerTask task = new TimerTask() {
         @Override
         public void run() {
-            System.out.println("Task is executing...");
+            try {
+                handleHeaters();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("The current cavity temperature is: " + cavityTemp);
+
         }
     };
 
@@ -246,6 +252,7 @@ public class Simulator {
      * @param cookTime
      */
     public void startCooking(int temp, int cookTime){
+        cookingInfo[2] = temp;
         System.out.println("Starting cook at " + temp + " degrees fahrenheit" +
                 " for " +
                 cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
@@ -292,6 +299,10 @@ public class Simulator {
         cookingInfo[2] = 1;
     }
 
+    /**
+     * Method that converts the minutes from the first two elements of cookingInfo into seconds and returns them as an int
+     * @return
+     */
     private int convertMinSecToSec(){
         return(cookingInfo[0]*60 + cookingInfo[1]);
     }
@@ -338,6 +349,9 @@ public class Simulator {
         System.out.println("[" + cookingInfo[0] + ", " + cookingInfo[1] + ", " +  cookingInfo[2] + ", " + cookingInfo[3] + "]");
     }
 
+    /**
+     * Jesus, can you comment and see what these do?
+     */
     private class tempSensorThread extends Thread{
         @Override
         public void run(){
@@ -351,6 +365,9 @@ public class Simulator {
         }
     }
 
+    /**
+     * Jesus, can you comment and see what these do?
+     */
     private class pauseButtonSensor extends Thread{
         @Override
         public void run(){
@@ -360,12 +377,18 @@ public class Simulator {
         }
     }
 
+    /**
+     * Jesus, can you comment and see what these do?
+     */
     private class timerThread extends Thread{
         int startTime, cookTime;
         timerThread(int startTime, int cookTime){
             this.startTime=startTime;
             this.cookTime=cookTime;
         }
+        /**
+         * Jesus, can you comment and see what these do?
+         */
         public synchronized boolean timeUp(){
             if(((int)System.currentTimeMillis()/1000)-startTime >= cookTime){
                 return true;
@@ -373,6 +396,9 @@ public class Simulator {
             return false;
         }
 
+        /**
+         * Jesus, can you comment and see what these do?
+         */
         @Override
         public void run(){
             while (threadLive){
@@ -389,6 +415,9 @@ public class Simulator {
 
 
 
+    /**
+     * Jesus, can you comment and see what these do?
+     */
     public class doorThread extends Thread{
         @Override
         public void run(){
@@ -398,5 +427,3 @@ public class Simulator {
         }
     }
 }
-
-

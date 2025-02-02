@@ -15,6 +15,8 @@ public class Main {
         simulator.togglePower();
         simulator.toggleLight();
 
+        simulator.startCooking(350, 15);
+
 
 
         // call any methods on this simulator here.
@@ -24,6 +26,6 @@ public class Main {
 
 
         // close the socket
-        simulator.socketClient.close();
+        //simulator.socketClient.close();
     }
 }
