@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.PriorityQueue;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -13,7 +14,9 @@ public class Simulator {
     boolean heatersDead = false;
     boolean bottomHeaterIsOn = false;
     public SimulatorSocketClient socketClient;
-    int cookTime = 0;
+    int cookTime = 300;
+    int cookTemp = 350;
+    int cookMode = 1;
     TimerTask task = new TimerTask() {
         @Override
         public void run() {
@@ -31,6 +34,7 @@ public class Simulator {
 
             try {
                 handleHeaters();
+                System.out.println("HandleHeaters called.");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -68,7 +72,7 @@ public class Simulator {
      * 2 - Bake (bottom heater)
      * 3 - Broil (top heater)
      */
-    int cookingInfo[] = new int[4];
+    //int cookingInfo[] = new int[4];
     /**
      * An array of booleans that shows which heater will be used during the cook.
      * The first element represents the top heater and the second element represents the bottom heater
@@ -97,32 +101,29 @@ public class Simulator {
 
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
-
         /**
          * I think this is where we should start/stop the system thread
          * -G
          */
-
         socketClient.sendMessage(1);
         powerIsOn = !powerIsOn;
-        System.out.print("Turned power ");
-        if(powerIsOn){
-            System.out.println("on");
+    }
+
+    public void toggleLight() throws IOException{
+        if(lightIsOn){
+            turnLightOff();
         }
         else{
-            System.out.println("off");
+            turnLightOn();
         }
     }
-    public void toggleLight() throws IOException {
-        socketClient.sendMessage(4);
-        lightIsOn = !lightIsOn;
-        System.out.print("Turned light ");
-        if(lightIsOn){
-            System.out.println("on.");
-        }
-        else{
-            System.out.println("off.");
-        }
+    public void turnLightOn() throws IOException {
+        //TODO Send message saying turn light on
+        lightIsOn = true;
+    }
+    public void turnLightOff() throws IOException{
+        //TODO Send message saying turn light off
+        lightIsOn = false;
     }
     public void toggleDoorSensor() throws IOException {
         socketClient.sendMessage(5);
@@ -135,43 +136,71 @@ public class Simulator {
         }
         System.out.println("door.");
     }
-    public void toggleTopHeater() throws IOException {
-        socketClient.sendMessage(2);
-        if(heatersDead && !topHeaterIsOn){
-            System.out.println("Top heater is dead.");
-            return;
+    public void turnHeatersOn() throws IOException{
+        if(heatersUsed[0] == true){
+            topHeaterIsOn = true;
+            System.out.println("Turned on top heater");
+            //TODO send message turning on top heater
         }
-        topHeaterIsOn = !topHeaterIsOn;
-        System.out.print("Turned top heater ");
-        if(topHeaterIsOn){
-            System.out.println("on");
-        }
-        else{
-            System.out.println("off");
+        if(heatersUsed[1] == true){
+            bottomHeaterIsOn = true;
+            System.out.println("Turned on bottom heater");
+            //TODO send message turning on bottom heater
         }
     }
-    public void toggleBottomHeater() throws IOException {
-        socketClient.sendMessage(3);
-        if(heatersDead && !bottomHeaterIsOn){
-            System.out.println("Bottom heater is dead.");
-            return;
-        }
-        bottomHeaterIsOn = !bottomHeaterIsOn;
-        System.out.print("Turned bottom heater ");
-        if(bottomHeaterIsOn){
-            System.out.println("on");
+    public void turnHeatersOff() throws IOException{
+        topHeaterIsOn = false;
+        bottomHeaterIsOn = false;
+        //TODO send message turning off both heaters
+    }
+
+    /**
+     * t: 1 = time, 2 = temp
+     * d; 1 = up, -1 = down
+     * @param t
+     * @param d
+     */
+    public void incrementTimeOrTemp(int t, int d){
+        if(t == 1){
+            cookTime += (60*d);
         }
         else{
-            System.out.println("off");
+            cookTemp += (15*d);
         }
     }
 
-    //Method to set the cooking info when a packet is recieved from FXdevice simulator over the socket.
-    public void setCookingInfo(int[] info){
-        cookingInfo[0] = info[0];
-        cookingInfo[1] = info[1];
-        cookingInfo[2] = info[2];
-        cookingInfo[3] = info[3];
+    /**
+     * Method to recieve an int and do the appropriate action according to the int passed in
+     */
+    public void handleInput(int i){
+        switch(i) {
+            //cases
+                //TODO Toggle power
+                    //togglePower method
+                //TODO Toggle light
+                    //if(lightIsOn){
+                    //    turnLightOff();}
+                    //else{
+                    //    turnLightOn();}
+                //TODO Toggle door
+                    //toggleDoorSensor();
+                //TODO Temp up
+                    //IncrementTimeOrTemp(2, 1);
+                //TODO Temp down
+                    //IncrementTimeOrTemp(2, -1);
+                //TODO Time up
+                    //IncrementTimeOrTemp(1, 1);
+                //TODO Time down
+                    //IncrementTimeOrTemp(1, -1);
+                //TODO Roast
+                    //cookMode = 1;
+                //TODO Bake
+                    //cookMode = 2;
+                //TODO Broil
+                    //cookMode = 3;
+                //TODO Start
+                //TODO Stop/Clear
+        }
     }
 
     /**
@@ -187,17 +216,7 @@ public class Simulator {
             System.out.println("Door is open, cannot start cooking.");
             return false;
         }
-        else {
-            cookTime = convertMinSecToSec();
-            int temp = cookingInfo[2];
-            if(cookingInfo[3] == 1 || cookingInfo[3] == 2){
-                heatersUsed[1] = true;
-            }
-            if(cookingInfo[3] == 1 || cookingInfo[3] == 3){
-                heatersUsed[0] = true;
-            }
-            return true;
-        }
+        return true;
     }
 
 
@@ -211,28 +230,16 @@ public class Simulator {
     public void handleHeaters() throws IOException {
         if(cavityTemp >= 500){
             heatersDead = true;
-            topHeaterIsOn = false;
-            bottomHeaterIsOn = false;
+            turnHeatersOff();
         }
-        else if(cavityTemp < cookingInfo[2]){
-            int tempChange = 0;
-            if(heatersUsed[0]){
-                tempChange += 5;
-                if(!topHeaterIsOn){
-                    toggleTopHeater();
-                }
-            }
-            if(heatersUsed[1]){
-                tempChange += 5;
-                if(!bottomHeaterIsOn){
-                    toggleBottomHeater();
-                }
-            }
-            cavityTemp += tempChange;
+        else if(cavityTemp <= cookTemp){
+            System.out.println("cavityTemp < cookTemp");
+            turnHeatersOn();
+            if(topHeaterIsOn){ cavityTemp += 5;}
+            if(bottomHeaterIsOn) { cavityTemp += 5;}
         }
-        else if(cavityTemp > cookingInfo[2]){
-            toggleTopHeater();
-            toggleBottomHeater();
+        else if(cavityTemp > cookTemp){
+            turnHeatersOff();
             cavityTemp -= 2;
         }
     }
@@ -241,15 +248,12 @@ public class Simulator {
      * Stops the cook, but doesn't reset the time or anything
      * Saves the time left on the timer and the temperature.
      */
-    public synchronized void stopCooking(){
+    public synchronized void stopCooking() throws IOException {
         pause();
         stopButtonPressed=false;
         threadLive=false;
-        topHeaterIsOn = false;
-        bottomHeaterIsOn = false;
-        lightIsOn = true;
-        cookingInfo[0] = cookTime/60;
-        cookingInfo[1] = cookTime%60;
+        turnHeatersOff();
+        turnLightOn();
     }
 
     /**
@@ -259,19 +263,32 @@ public class Simulator {
     public void resetOven() throws IOException {
         stop();
         toggleLight();
-        cookingInfo = new int[4];
+        cookTemp = 350;
+        cookTime = 300;
+        cookMode = 1;
     }
 
     /**
      * Method to start the cook
-     * @param temp
-     * @param cookTime
      */
-    public void startCooking(int temp, int cookTime){
-        cookingInfo[2] = temp;
-        System.out.println("Starting cook at " + temp + " degrees fahrenheit" +
-                " for " +
-                cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
+    public void startCooking(){
+        System.out.println("Starting " + cookMode + " cook at " + cookTemp + " degrees fahrenheit for " + cookTime + " seconds.");
+
+        switch(cookMode){
+            case 1:
+                //Roast
+                heatersUsed[0] = true;
+                heatersUsed[1] = true;
+                break;
+            case 2:
+                //Bake
+                heatersUsed[1] = true;
+                break;
+            case 3:
+                //Broil
+                heatersUsed[0] = true;
+                break;
+        }
 
         timer.scheduleAtFixedRate(task, 0, 1000);
 
@@ -308,18 +325,16 @@ public class Simulator {
         boolean doorIsClosed = true;
         boolean topHeaterIsOn = false;
         boolean bottomHeaterIsOn = false;
-        cookingInfo[0] = 0;
-        cookingInfo[1] = 0;
-        cookingInfo[2] = 1;
+        cookTime = 300;
+        cookTemp = 350;
+        cookMode = 1;
     }
 
     /**
      * Method that converts the minutes from the first two elements of cookingInfo into seconds and returns them as an int
      * @return
      */
-    private int convertMinSecToSec(){
-        return(cookingInfo[0]*60 + cookingInfo[1]);
-    }
+
 
 
     public void printInfo(){
@@ -360,7 +375,7 @@ public class Simulator {
         }
         System.out.println("\nCooking cavity temperature: " + cavityTemp);
         System.out.println("Current cooking info:");
-        System.out.println("[" + cookingInfo[0] + ", " + cookingInfo[1] + ", " +  cookingInfo[2] + ", " + cookingInfo[3] + "]");
+        System.out.println("Temp: " + cookTemp + "\nTime: " + cookTime + "\nMode: " + cookMode);
     }
 
     /**
@@ -372,7 +387,13 @@ public class Simulator {
         @Override
         public void run(){
             while (threadLive){
-                if(!powerIsOn && doorIsOpen && stopButtonPressed){stopCooking();}
+                if(!powerIsOn && doorIsOpen && stopButtonPressed){
+                    try {
+                        stopCooking();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         }
     }
