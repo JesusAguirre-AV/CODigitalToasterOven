@@ -1,6 +1,4 @@
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -13,12 +11,23 @@ public class Simulator {
     boolean doorIsOpen = false;
     boolean topHeaterIsOn = false;
     boolean heatersDead = false;
-    boolean isCooking = false;
     boolean bottomHeaterIsOn = false;
     public SimulatorSocketClient socketClient;
     TimerTask task = new TimerTask() {
         @Override
         public void run() {
+
+            //Here is where it will handle the pause check, if it is false, it should continue, otherwise it waits
+            synchronized (lock){
+                while (timerPause){
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
             try {
                 handleHeaters();
             } catch (IOException e) {
@@ -26,9 +35,29 @@ public class Simulator {
             }
             System.out.println("The current cavity temperature is: " + cavityTemp);
 
+            if(!threadLive){
+                timer.cancel();
+            }
+
         }
     };
 
+    /**Methods and objects used to halt the cooking process or continue it should certain events occur. The lock object
+     * is used to */
+    boolean timerPause = false;
+    Object lock = new Object();
+    public void pause(){
+        synchronized (lock){
+            timerPause = true;
+        }
+    }
+    public void resume(){
+        synchronized (lock){
+            timerPause = false;
+            lock.notifyAll();
+        }
+    }
+    interruptCheckThread interrupter = new interruptCheckThread();
 
     int cavityTemp = 70;
     /**An array of integers that stores 4 ints with the following values
@@ -45,7 +74,9 @@ public class Simulator {
      */
     boolean heatersUsed[] = new boolean[2];
     /**
-     * Booleans relevant to the threads
+     * Booleans relevant to the threads, threadLive is a way to kill the threads in the event of an interruption or
+     * if the timer runs out. stopButtonPressed will serve a similar purpose but more to help with event handling from
+     * the javaFX or any future port connections.
      * */
     boolean threadLive=false;
     boolean stopButtonPressed=false;
@@ -223,6 +254,7 @@ public class Simulator {
      * Saves the time left on the timer and the temperature.
      */
     public synchronized void stopCooking(){
+        pause();
         stopButtonPressed=false;
         threadLive=false;
         topHeaterIsOn = false;
@@ -258,7 +290,6 @@ public class Simulator {
                 cookTime + " seconds (" + cookingInfo[0] + " minutes " + cookingInfo[1] + " seconds)");
 
         timer.scheduleAtFixedRate(task, 0, 1000);
-        int startTime = (int)System.currentTimeMillis()/1000;
 
         new Timer().schedule(new TimerTask() {
             @Override
@@ -276,19 +307,14 @@ public class Simulator {
         //setting up threads to run and cook
         threadLive=true;
 
-        timerThread timerRunner = new timerThread(startTime, cookTime);
-        tempSensorThread tempRunner = new tempSensorThread();
-        pauseButtonSensor pauseRunner = new pauseButtonSensor();
-
-        timerRunner.start();
-        tempRunner.start();
-        pauseRunner.start();
+        interrupter.start();
     }
 
     /**
      * Method to stop the cook, but save the time and the temperature
      */
-    public void stop(){
+    public synchronized void stop(){
+        pause();
         threadLive=false;
         boolean lightIsOn = false;
         boolean doorIsClosed = true;
@@ -350,79 +376,15 @@ public class Simulator {
     }
 
     /**
-     * Jesus, can you comment and see what these do?
+     * Thread to act as the simulator cooking conditions other than the timer. This is meant to check for interruptions
+     * such as the oven being opened, the pause/reset button pressed, and any other possible interruptions we may wish
+     * to include in the future. Calls the stopCooking method that will pause the timer.
      */
-    private class tempSensorThread extends Thread{
+    public class interruptCheckThread extends Thread{
         @Override
         public void run(){
             while (threadLive){
-                try {
-                    handleHeaters();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-
-    /**
-     * Jesus, can you comment and see what these do?
-     */
-    private class pauseButtonSensor extends Thread{
-        @Override
-        public void run(){
-            while (threadLive){
-                if(stopButtonPressed){stopCooking();}
-            }
-        }
-    }
-
-    /**
-     * Jesus, can you comment and see what these do?
-     */
-    private class timerThread extends Thread{
-        int startTime, cookTime;
-        timerThread(int startTime, int cookTime){
-            this.startTime=startTime;
-            this.cookTime=cookTime;
-        }
-        /**
-         * Jesus, can you comment and see what these do?
-         */
-        public synchronized boolean timeUp(){
-            if(((int)System.currentTimeMillis()/1000)-startTime >= cookTime){
-                return true;
-            }
-            return false;
-        }
-
-        /**
-         * Jesus, can you comment and see what these do?
-         */
-        @Override
-        public void run(){
-            while (threadLive){
-                if(!timeUp()){
-                    try {
-                        resetOven();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }
-    }
-
-
-
-    /**
-     * Jesus, can you comment and see what these do?
-     */
-    public class doorThread extends Thread{
-        @Override
-        public void run(){
-            while (threadLive){
-                if(doorIsOpen){stopCooking();}
+                if(!powerIsOn && doorIsOpen && stopButtonPressed){stopCooking();}
             }
         }
     }
