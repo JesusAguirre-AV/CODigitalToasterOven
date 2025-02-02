@@ -707,14 +707,14 @@
             Polygon triangleIncrement = new Polygon(0, 50, 50, 50, 25, 0);
             Polygon triangleDecrement = new Polygon(0, 0, 50, 0, 25, 50);
 
-            Image image = new Image(Objects.requireNonNull(getClass().getResource("add-icon3.PNG")).toExternalForm());
-            Image image2 = new Image(Objects.requireNonNull(getClass().getResource("subtract-icon1.PNG")).toExternalForm());
+//            Image image = new Image(Objects.requireNonNull(getClass().getResource("add-icon3.PNG")).toExternalForm());
+//            Image image2 = new Image(Objects.requireNonNull(getClass().getResource("subtract-icon1.PNG")).toExternalForm());
 
             triangleIncrement.setStyle("-fx-border-color: white");
             triangleDecrement.setStyle("-fx-border-color: white");
 
-            triangleDecrement.setFill(new ImagePattern(image2));
-            triangleIncrement.setFill(new ImagePattern(image));
+            triangleDecrement.setFill(Color.BLACK); //new ImagePattern(image2)
+            triangleIncrement.setFill(Color.BLACK); //new ImagePattern(image)
 
             // handle the mouse clicks
             handleIncrementButtonClick(triangleIncrement);
