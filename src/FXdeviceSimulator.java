@@ -1061,11 +1061,7 @@
         private void handleLightButtonClicks(Circle lightButton){
             lightButton.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(3);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+
                 
                 // Light
                 // es not turn on after
@@ -1080,6 +1076,11 @@
                     }
                         pressLight(lightButton);
 
+                }
+                try {
+                    sendMessage(3);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             });
         }

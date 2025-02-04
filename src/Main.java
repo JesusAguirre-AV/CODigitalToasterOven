@@ -12,8 +12,7 @@ public class Main {
         Simulator simulator = new Simulator("localhost", 1234);
 
         // just testing that we are getting the messages
-        simulator.togglePower();
-        simulator.toggleLight();
+
 
 
 

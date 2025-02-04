@@ -135,7 +135,6 @@ public class Simulator {
         else{
             lightIsOn = true;
         }
-        socketClient.sendMessage(2);
     }
     public void toggleDoorSensor() throws IOException {
         socketClient.sendMessage(5);
@@ -189,6 +188,7 @@ public class Simulator {
         switch(i) {
             case 1:
                 togglePower();
+
                 break;
             case 2:
                 toggleDoorSensor();
