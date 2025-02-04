@@ -337,6 +337,11 @@
         private void setupHandleCLick(Rectangle handle){
             handle.setOnMouseClicked(event -> {
                 toggleDoor();
+                try {
+                    sendMessage(2);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             });
         }
 
@@ -578,6 +583,13 @@
          */
         private void handleBakeButtonClick(Button bakeButton){
             bakeButton.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(9);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 sett = setting.BAKE;
                 System.out.println("Clicked on the bake button");
 
@@ -590,6 +602,13 @@
          */
         private void handleBroilButtonClick(Button broilButton){
             broilButton.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(10);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 sett = setting.BROIL;
                 System.out.println("Clicked on the broil button");
             });
@@ -601,6 +620,13 @@
          */
         private void handleRoastButtonClick(Button roastButton){
             roastButton.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(8);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 sett = setting.ROAST;
                 System.out.println("Clicked on the roast button");
             });
@@ -638,12 +664,26 @@
          */
         private void handlePreButtonClick(Button pizza,Button nuggets){
             pizza.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(11);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 sett = setting.BAKE;
                 currentTimeMinutes.set(15);
                 currentTempF.set(375);
 
             });
             nuggets.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(12);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 sett = setting.ROAST;
                 currentTimeMinutes.set(10);
                 currentTempF.set(400);
@@ -677,6 +717,13 @@
          */
         private void handleStopButtonClick(Button stopButton){
             stopButton.setOnMousePressed(event -> {
+
+                try {
+                    sendMessage(14);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 timesPressed++;
 
                 if(timesPressed == 1)
@@ -746,6 +793,13 @@
          */
         private void handleStartButtonClick(Button startButton){
             startButton.setOnMouseClicked(event -> {
+
+                try {
+                    sendMessage(13);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 startButton();
             });
         }
@@ -874,11 +928,26 @@
          */
         private void handleIncrementButtonClick(Polygon incrementButton){
             incrementButton.setOnMouseClicked(event -> {
+
                 System.out.println("Clicked on the increment button");
                 if (isOnTime) {
+
+                    try {
+                        sendMessage(6);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     currentTimeMinutes.set(currentTimeMinutes.get() + 1);
                 }
                 else if(isOnTemp){
+
+                    try {
+                        sendMessage(4);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     // the max temp is 500
                     if (currentTempF.get() < 500){
                         currentTempF.set(currentTempF.get() + 15);
@@ -891,18 +960,36 @@
 
         /**
          * Method to handle the click on the broil button on our simulation
-         * @param decrementButton the time button
+         * @param
+         * PolButton the time button
          */
         private void handleDecrementButtonClick(Polygon decrementButton){
             decrementButton.setOnMouseClicked(event -> {
+
+
+
                 System.out.println("Clicked on the decrement button");
                 if(isOnTime){
+
+                    try {
+                        sendMessage(7);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     // the min is always 0
                     if (currentTimeMinutes.get() != 0){
                         currentTimeMinutes.set(currentTimeMinutes.get() - 1);
                     }
                 }
                 else if (isOnTemp){
+
+                    try {
+                        sendMessage(5);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     // the min is always 0
                     if (currentTempF.get() != 0){
                         currentTempF.set(currentTempF.get() - 15);
@@ -958,7 +1045,12 @@
          */
         private void handlePowerButtonClicks(Circle powerButton){
             powerButton.setOnMouseClicked(event -> {
-                    pressPower(powerButton);
+                try {
+                    sendMessage(1);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                pressPower(powerButton);
             });
         }
 
@@ -969,7 +1061,14 @@
         private void handleLightButtonClicks(Circle lightButton){
             lightButton.setOnMouseClicked(event -> {
 
-                // Light does not turn on after
+                try {
+                    sendMessage(3);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                
+                // Light
+                // es not turn on after
                 if(!isPowerOn){
                     System.out.println("Not On");
                 }else{

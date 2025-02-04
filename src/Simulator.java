@@ -97,10 +97,32 @@ public class Simulator {
     public Simulator(String host, int port) throws  IOException{
         try {
             socketClient = new SimulatorSocketClient(host, port);
+
+            new Thread(() -> {
+                try {
+                    grabNextMessage();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).start();
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+
+    /**
+     * Method to constantly grab the messages
+     */
+    public void grabNextMessage() throws InterruptedException, IOException {
+        while (true){
+            this.handleInput(socketClient.grabMessage());
+        }
+    }
+
 
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
