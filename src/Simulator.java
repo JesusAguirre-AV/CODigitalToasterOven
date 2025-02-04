@@ -126,7 +126,6 @@ public class Simulator {
 
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
-        socketClient.sendMessage(1);
         powerIsOn = !powerIsOn;
     }
 
