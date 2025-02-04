@@ -15,9 +15,6 @@ public class Main {
         simulator.togglePower();
         simulator.toggleLight();
 
-        if(simulator.checkCook()) {
-            simulator.startCooking();
-        }
 
 
         // call any methods on this simulator here.

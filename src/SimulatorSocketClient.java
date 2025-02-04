@@ -42,7 +42,7 @@ public class SimulatorSocketClient {
      * @throws IOException ..
      * @throws ClassNotFoundException ..
      */
-    public void waitForMessages() throws IOException, ClassNotFoundException {
+    public void waitForMessages() throws IOException, ClassNotFoundException, InterruptedException {
         while (true){
             int num = (int) in.readObject();
             System.out.println("The message number is " + num);

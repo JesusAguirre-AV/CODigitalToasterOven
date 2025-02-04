@@ -101,29 +101,15 @@ public class Simulator {
 
     //Toggle methods for toggleable fields
     public void togglePower() throws IOException {
-        /**
-         * I think this is where we should start/stop the system thread
-         * -G
-         */
         socketClient.sendMessage(1);
         powerIsOn = !powerIsOn;
     }
 
     public void toggleLight() throws IOException{
-        if(lightIsOn){
-            turnLightOff();
-        }
+        if(lightIsOn){lightIsOn = false;}
         else{
-            turnLightOn();
+            lightIsOn = true;
         }
-    }
-    public void turnLightOn() throws IOException {
-        //TODO Send message saying turn light on
-        lightIsOn = true;
-    }
-    public void turnLightOff() throws IOException{
-        //TODO Send message saying turn light off
-        lightIsOn = false;
     }
     public void toggleDoorSensor() throws IOException {
         socketClient.sendMessage(5);
@@ -175,63 +161,55 @@ public class Simulator {
     public void handleInput(int i) throws IOException {
         switch(i) {
             case 1:
-                //TODO Toggle power
-                    //togglePower method
                 togglePower();
                 break;
             case 2:
-                //TODO Toggle light
-                    //if(lightIsOn){
-                    //    turnLightOff();}
-                    //else{
-                    //    turnLightOn();}
-                break;
-            case 3:
-                //TODO Toggle door
-                    //toggleDoorSensor();
                 toggleDoorSensor();
                 break;
+            case 3:
+                toggleLight();
+                break;
             case 4:
-                //TODO Temp up
-                    //IncrementTimeOrTemp(2, 1);
+                //Temp up
                 incrementTimeOrTemp(2,1);
                 break;
             case 5:
-                //TODO Temp down
-                    //IncrementTimeOrTemp(2, -1);
+                //Temp down
                 incrementTimeOrTemp(2,-1);
                 break;
             case 6:
-                //TODO Time up
-                    //IncrementTimeOrTemp(1, 1);
+                //Time up
                 incrementTimeOrTemp(1,1);
                 break;
             case 7:
-                //TODO Time down
-                    //IncrementTimeOrTemp(1, -1);
+                //Time down
                 incrementTimeOrTemp(1,-1);
                 break;
             case 8:
-                //TODO Roast
-                    //cookMode = 1;
                 cookMode = 1;
+                heatersUsed[0] = true;
+                heatersUsed[1] = true;
                 break;
             case 9:
-                //TODO Bake
-                    //cookMode = 2;
                 cookMode = 2;
+                heatersUsed[1] = true;
+                heatersUsed[0] = false;
                 break;
             case 10:
-                //TODO Broil
-                    //cookMode = 3;
                 cookMode = 3;
+                heatersUsed[1] = false;
+                heatersUsed[0] = true;
                 break;
             case 11:
-                //TODO Start
-                startCooking();
+               // cookTime =
                 break;
             case 12:
-                //TODO Stop/Clear
+
+                break;
+            case 13:
+                startCooking();
+                break;
+            case 14:
                 stopCooking();
                 break;
         }
@@ -306,22 +284,13 @@ public class Simulator {
      * Method to start the cook
      */
     public void startCooking(){
-        System.out.println("Starting " + cookMode + " cook at " + cookTemp + " degrees fahrenheit for " + cookTime + " seconds.");
-
-        switch(cookMode){
-            case 1:
-                //Roast
-                heatersUsed[0] = true;
-                heatersUsed[1] = true;
-                break;
-            case 2:
-                //Bake
-                heatersUsed[1] = true;
-                break;
-            case 3:
-                //Broil
-                heatersUsed[0] = true;
-                break;
+        //System.out.println("Starting " + cookMode + " cook at " + cookTemp + " degrees fahrenheit for " + cookTime + " seconds.");
+        isCooking = true;
+        if(heatersUsed[0]){
+            //TODO send message to turn on top heater
+        }
+        if(heatersUsed[1]){
+            //TODO send message to turn on bottom heater
         }
 
         timer.scheduleAtFixedRate(task, 0, 1000);
