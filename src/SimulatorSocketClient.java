@@ -50,6 +50,14 @@ public class SimulatorSocketClient {
         }
     }
 
+    /**
+     * Method to constantly take messages
+     */
+    public int grabMessage() throws InterruptedException {
+        return blockingQueue.take();
+    }
+
+
 
     /**
      * Method to close the socket

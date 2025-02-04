@@ -94,7 +94,7 @@ public class Simulator {
      * @param host the host info
      * @param port the port
      */
-    public Simulator(String host, int port){
+    public Simulator(String host, int port) throws  IOException{
         try {
             socketClient = new SimulatorSocketClient(host, port);
         } catch (IOException e) {

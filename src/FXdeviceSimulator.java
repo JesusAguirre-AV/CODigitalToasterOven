@@ -47,9 +47,12 @@
         private boolean isBottomHeaterOn = false;
         private boolean isLightOn = false;
         private boolean doorStatus = false;
+        private boolean heaterKill = false;
+
         private int timesPressed = 0;
         private Circle powerButton;
         private Circle lightButton;
+        private Rectangle door = setupDoor();
         private ArrayList<Button> allButtons = new ArrayList<>();
         private SimpleIntegerProperty currentTimeMinutes = new SimpleIntegerProperty(0);
         private SimpleIntegerProperty currentTimeSeconds = new SimpleIntegerProperty(0);
@@ -127,81 +130,38 @@
                     // toggle power
                     case 1 -> {
                         pressPower(powerButton);
-                        sendMessage(1);
                     }
-
-                    // toggle top heater
+                    //toggle light
                     case 2 -> {
+                        toggleLight(); // toggle light
+                    }
+                    //toggle top heater
+                    case 3 -> {
                         if (!isTopHeaterOn){
                             toggleTopHeaterOn();
-                            sendMessage(2);
+
                         }
                         else{
                             toggleTopHeaterOff();
-                            sendMessage(2);
                         }
                     }
-                    // toggle bottom heater
-                    case 3 -> {
+                    //toggle bottom heater
+                    case 4 -> {
                         if (!isBottomHeaterOn){
-                            toggleBottomHeaterOn(); // toggle bottom heater
-                            sendMessage(3);
+                            toggleBottomHeaterOn();
                         }
                         else {
                             toggleTopHeaterOff();
-                            sendMessage(3);
                         }
                     }
-
-                    case 4 -> {
-                        System.out.println("Got a message to turn on the light ");
-                        isLightOn = false;
-                        toggleLight(); // toggle light
-                        sendMessage(4);
-                    }
-
+                    //toggle door
                     case 5 -> {
-                        toggleDoor(); // toggle door sensor
-                        sendMessage(5);
-                    }
-                    case 6 -> {
-                            System.out.println("Got a message 6"); // turn off light
-                            isLightOn = true;
-                            toggleLight();
-                            sendMessage(6);
-                    }
-                    case 7 -> {
-                        System.out.println("Got a message 7");// Toggle door
                         toggleDoor();
-                        sendMessage(7);
                     }
-                    case 8 -> System.out.println("Got a message 8"); // temp up
-                    case 9 -> System.out.println("Got a message 9"); // temp down
-                    case 10 -> System.out.println("Got a message 10"); // Time up
-                    case 11 -> System.out.println("Got a message 11"); // Time down
-                    case 12 -> {
-                        System.out.println("Got a message 12"); // Roast
-                        sett = setting.ROAST;
-                        sendMessage(12);
+                    //kill the heaters
+                    case 6 -> {
+                        killHeaters();
                     }
-                    case 13 -> {
-                        System.out.println("Got a message 13");// Bake
-                        sett = setting.BAKE;
-                        sendMessage(13);
-                    }
-                    case 14 -> {
-                        System.out.println("Got a message 14"); // broil
-                        sett = setting.BROIL;
-                        sendMessage(14);
-                    }
-                    case 15 -> {
-                        System.out.println("Got a message 15"); // Start
-                        startButton();
-                        sendMessage(15);
-                    }
-                    case 16 -> System.out.println("Got a message 16"); // Stop/Clear
-                    case 17 -> System.out.println("Got a message to update temp"); // assume they send [17, newTemp, newTime]
-
                 }
             }
         }
@@ -246,9 +206,6 @@
 
             //The main Pane
             Pane mainSection = setupMainSection();
-
-            //Set up the Door.
-            Rectangle door = setupDoor();
 
             //Set the handle
             Rectangle handle = setupHandle();
@@ -391,11 +348,14 @@
                 System.out.println("Door is now Closed");
                 doorStatus = false;
                 turnOnAllButtons();
+                door.setFill(Color.BLACK);
             }else
             {
                 System.out.println("Door is now Open");
                 turnOffAllButtons();
                 doorStatus = true;
+                door.setFill(Color.HOTPINK);
+
             }
         }
 
@@ -681,6 +641,7 @@
                 sett = setting.BAKE;
                 currentTimeMinutes.set(15);
                 currentTempF.set(375);
+
             });
             nuggets.setOnMouseClicked(event -> {
                 sett = setting.ROAST;
@@ -745,6 +706,7 @@
          * Method to handle clear action button
          */
         private void handleClear() {
+
             System.out.println("Clicked on the clear button");
             toggleBottomHeaterOff();
             toggleTopHeaterOff();
@@ -808,16 +770,20 @@
         /**
          * Method to toggle the top heater on
          */
-        private void toggleTopHeaterOn(){
-           if(heaters[0].getFill() == Color.BLACK) {
-               FillTransition ft = new FillTransition(Duration.seconds(6), heaters[0], Color.BLACK, Color.RED);
-               ft.setCycleCount(0);
-               ft.setAutoReverse(false);
-               ft.play();
-           }else{
-               heaters[0].setFill(Color.RED);
-           }
-           isTopHeaterOn = true;
+        private void toggleTopHeaterOn() {
+            if (heaterKill) {
+                //heater is dead
+            }else {
+            if (heaters[0].getFill() == Color.BLACK) {
+                FillTransition ft = new FillTransition(Duration.seconds(6), heaters[0], Color.BLACK, Color.RED);
+                ft.setCycleCount(0);
+                ft.setAutoReverse(false);
+                ft.play();
+            } else {
+                heaters[0].setFill(Color.RED);
+            }
+            isTopHeaterOn = true;
+        }
 
         }
 
@@ -826,17 +792,19 @@
          */
         private void toggleBottomHeaterOn(){
 
-            if(heaters[1].getFill() == Color.BLACK) {
-                FillTransition ft = new FillTransition(Duration.seconds(6), heaters[1], Color.BLACK, Color.RED);
-                ft.setCycleCount(0);
-                ft.setAutoReverse(false);
-                ft.play();
-
-            }else{
-                heaters[1].setFill(Color.RED);
+            if(heaterKill){
+                //heater is dead
+            }else {
+                if (heaters[1].getFill() == Color.BLACK) {
+                    FillTransition ft = new FillTransition(Duration.seconds(6), heaters[1], Color.BLACK, Color.RED);
+                    ft.setCycleCount(0);
+                    ft.setAutoReverse(false);
+                    ft.play();
+                } else {
+                    heaters[1].setFill(Color.RED);
+                }
+                isBottomHeaterOn = true;
             }
-
-            isBottomHeaterOn = true;
 
         }
 
@@ -1076,5 +1044,10 @@
                 isLightOn = false;
 
             }
+        }
+
+        private void killHeaters(){
+            heaterKill = true;
+
         }
     }
