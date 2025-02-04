@@ -1103,7 +1103,6 @@
                     lightButton.setFill(Color.BLACK);
                 }
             }
-
             else {
                 System.out.println("Power On");
                 powerButton.setFill(Color.GREEN);
