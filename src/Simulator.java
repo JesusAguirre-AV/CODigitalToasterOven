@@ -50,7 +50,7 @@ public class Simulator {
     /**Methods and objects used to halt the cooking process or continue it should certain events occur. The lock object
      * is used to */
     boolean timerPause = false;
-    Object lock = new Object();
+    final Object lock = new Object();
     public void pause(){
         synchronized (lock){
             timerPause = true;
@@ -172,34 +172,68 @@ public class Simulator {
     /**
      * Method to recieve an int and do the appropriate action according to the int passed in
      */
-    public void handleInput(int i){
+    public void handleInput(int i) throws IOException {
         switch(i) {
-            //cases
+            case 1:
                 //TODO Toggle power
                     //togglePower method
+                togglePower();
+                break;
+            case 2:
                 //TODO Toggle light
                     //if(lightIsOn){
                     //    turnLightOff();}
                     //else{
                     //    turnLightOn();}
+                break;
+            case 3:
                 //TODO Toggle door
                     //toggleDoorSensor();
+                toggleDoorSensor();
+                break;
+            case 4:
                 //TODO Temp up
                     //IncrementTimeOrTemp(2, 1);
+                incrementTimeOrTemp(2,1);
+                break;
+            case 5:
                 //TODO Temp down
                     //IncrementTimeOrTemp(2, -1);
+                incrementTimeOrTemp(2,-1);
+                break;
+            case 6:
                 //TODO Time up
                     //IncrementTimeOrTemp(1, 1);
+                incrementTimeOrTemp(1,1);
+                break;
+            case 7:
                 //TODO Time down
                     //IncrementTimeOrTemp(1, -1);
+                incrementTimeOrTemp(1,-1);
+                break;
+            case 8:
                 //TODO Roast
                     //cookMode = 1;
+                cookMode = 1;
+                break;
+            case 9:
                 //TODO Bake
                     //cookMode = 2;
+                cookMode = 2;
+                break;
+            case 10:
                 //TODO Broil
                     //cookMode = 3;
+                cookMode = 3;
+                break;
+            case 11:
                 //TODO Start
+                startCooking();
+                break;
+            case 12:
                 //TODO Stop/Clear
+                stopCooking();
+                break;
         }
     }
 
