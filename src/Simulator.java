@@ -13,6 +13,7 @@ public class Simulator {
     boolean topHeaterIsOn = false;
     boolean heatersDead = false;
     boolean bottomHeaterIsOn = false;
+    boolean isCooking = false;
     public SimulatorSocketClient socketClient;
     int cookTime = 300;
     int cookTemp = 350;
@@ -54,11 +55,13 @@ public class Simulator {
     public void pause(){
         synchronized (lock){
             timerPause = true;
+            isCooking = false;
         }
     }
     public void resume(){
         synchronized (lock){
             timerPause = false;
+            isCooking = true;
             lock.notifyAll();
         }
     }
@@ -110,6 +113,7 @@ public class Simulator {
         else{
             lightIsOn = true;
         }
+        socketClient.sendMessage(2);
     }
     public void toggleDoorSensor() throws IOException {
         socketClient.sendMessage(5);
@@ -126,18 +130,18 @@ public class Simulator {
         if(heatersUsed[0] == true){
             topHeaterIsOn = true;
             System.out.println("Turned on top heater");
-            //TODO send message turning on top heater
+            socketClient.sendMessage(3);
         }
         if(heatersUsed[1] == true){
             bottomHeaterIsOn = true;
             System.out.println("Turned on bottom heater");
-            //TODO send message turning on bottom heater
+            socketClient.sendMessage(4);
         }
     }
     public void turnHeatersOff() throws IOException{
         topHeaterIsOn = false;
         bottomHeaterIsOn = false;
-        //TODO send message turning off both heaters
+        socketClient.sendMessage(6);
     }
 
     /**
@@ -265,7 +269,6 @@ public class Simulator {
         stopButtonPressed=false;
         threadLive=false;
         turnHeatersOff();
-        turnLightOn();
     }
 
     /**
@@ -273,7 +276,7 @@ public class Simulator {
      * @throws IOException
      */
     public void resetOven() throws IOException {
-        stop();
+        stopCooking();
         toggleLight();
         cookTemp = 350;
         cookTime = 300;
@@ -316,21 +319,6 @@ public class Simulator {
         threadLive=true;
 
         interrupter.start();
-    }
-
-    /**
-     * Method to stop the cook, but save the time and the temperature
-     */
-    public synchronized void stop(){
-        pause();
-        threadLive=false;
-        boolean lightIsOn = false;
-        boolean doorIsClosed = true;
-        boolean topHeaterIsOn = false;
-        boolean bottomHeaterIsOn = false;
-        cookTime = 300;
-        cookTemp = 350;
-        cookMode = 1;
     }
 
     /**
