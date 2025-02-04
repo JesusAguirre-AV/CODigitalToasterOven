@@ -185,6 +185,7 @@ public class Simulator {
      * Method to recieve an int and do the appropriate action according to the int passed in
      */
     public void handleInput(int i) throws IOException {
+        System.out.println("Handling input of number " + i);
         switch(i) {
             case 1:
                 togglePower();
@@ -227,10 +228,12 @@ public class Simulator {
                 heatersUsed[0] = true;
                 break;
             case 11:
-               // cookTime =
+                cookTime = 900;
+                cookTemp = 375;
                 break;
             case 12:
-
+                cookTime = 600;
+                cookTemp = 400;
                 break;
             case 13:
                 startCooking();
