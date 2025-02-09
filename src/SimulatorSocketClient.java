@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -9,7 +10,7 @@ public class SimulatorSocketClient {
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private BlockingQueue<Integer> blockingQueue = new LinkedBlockingQueue<>();
+    private BlockingQueue<ArrayList<Integer>> blockingQueue = new LinkedBlockingQueue<>();
 
     public SimulatorSocketClient(String host, int port) throws IOException {
         socket = new Socket(host, port);
@@ -47,17 +48,18 @@ public class SimulatorSocketClient {
      */
     public void waitForMessages() throws IOException, ClassNotFoundException, InterruptedException {
         while (true){
-            int num = (int) in.readObject();
-            System.out.println("The message number is " + num);
-            blockingQueue.put(num);
-            // TODO: handle the messages
+//            int messageNum = 0;
+            ArrayList<Integer> listIn = (ArrayList<Integer>) in.readObject();
+//            messageNum = listIn.get(0)
+//            System.out.println("The message number is " + messageNum);
+            blockingQueue.put(listIn);
         }
     }
 
     /**
      * Method to constantly take messages
      */
-    public int grabMessage() throws InterruptedException {
+    public ArrayList<Integer> grabMessage() throws InterruptedException {
         return blockingQueue.take();
     }
 

@@ -1,41 +1,30 @@
-    import javafx.animation.FadeTransition;
-    import javafx.animation.FillTransition;
+import javafx.animation.FillTransition;
     import javafx.application.Application;
     import javafx.application.Platform;
     import javafx.beans.binding.Bindings;
     import javafx.beans.property.SimpleIntegerProperty;
-    import javafx.event.ActionEvent;
-    import javafx.event.EventHandler;
-    import javafx.geometry.Pos;
+import javafx.geometry.Pos;
     import javafx.scene.Scene;
     import javafx.scene.control.Button;
     import javafx.scene.control.Label;
-    import javafx.scene.effect.BlendMode;
-    import javafx.scene.image.Image;
-    import javafx.scene.layout.*;
+import javafx.scene.layout.*;
     import javafx.scene.paint.*;
     import javafx.scene.shape.Circle;
     import javafx.scene.shape.Polygon;
     import javafx.scene.shape.Rectangle;
-    import javafx.scene.text.Font;
-    import javafx.scene.text.FontWeight;
-    import javafx.scene.text.Text;
+import javafx.scene.text.Text;
     import javafx.stage.Stage;
     import javafx.util.Duration;
-    import org.w3c.dom.css.Rect;
 
-    import java.io.IOException;
+import java.io.IOException;
     import java.io.ObjectInputStream;
     import java.io.ObjectOutputStream;
-    import java.io.OutputStream;
-    import java.net.ServerSocket;
+import java.net.ServerSocket;
     import java.net.Socket;
-    import java.security.KeyStore;
-    import java.util.ArrayList;
-    import java.util.Objects;
-    import java.util.Set;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-    public class FXdeviceSimulator extends Application {
+public class FXdeviceSimulator extends Application {
         private int toasterHeight = 500;
         private int toasterMainSectionWidth = 700;
         private int toasterRightSectionWidth = 200;
@@ -48,6 +37,11 @@
         private boolean isLightOn = false;
         private boolean doorStatus = false;
         private boolean heaterKill = false;
+
+        private int numberTempButtonPressedIncrement = 0;
+        private int numberTimeButtonPressedIncrement = 0;
+        private int numberTempButtonPressedDecrement = 0;
+        private int numberTimeButtonPressedDecrement = 0;
 
         private int timesPressed = 0;
         private Circle powerButton;
@@ -68,7 +62,13 @@
             ROAST,
             NOSETT
         }
+        private enum preset{
+            Nuggets,
+            Pizza,
+            None
+        }
         private setting sett = setting.NOSETT;
+        private preset pre = preset.None;
         //Set the heaters
         private Rectangle [] heaters = setupHeaters();
 
@@ -108,11 +108,11 @@
 
         /**
          * Method to send messages to the client
-         * @param messageType
+         * @param messageOut
          * @throws IOException
          */
-        private void sendMessage(int messageType) throws IOException {
-            out.writeObject(messageType);
+        private void sendMessage(ArrayList<Integer> messageOut) throws IOException {
+            out.writeObject(messageOut);
             out.flush();
         }
 
@@ -129,21 +129,32 @@
                 switch (currentMessage){
                     // toggle power
                     case 1 -> {
+                        System.out.println("Got a message to turn on power");
                         pressPower(powerButton);
+
+                        // send a message back to make sure the simulator knows we toggled the power
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(1, isPowerOn ? 1 : 2)));
+
                     }
                     //toggle light
                     case 2 -> {
                         toggleLight(); // toggle light
+
+                        // send message back telling them we turned on the light
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(2, isLightOn ? 1 : 2)));
                     }
                     //toggle top heater
                     case 3 -> {
+
                         if (!isTopHeaterOn){
                             toggleTopHeaterOn();
-
                         }
                         else{
                             toggleTopHeaterOff();
                         }
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(3, isTopHeaterOn ? 1 : 2 )));
+
                     }
                     //toggle bottom heater
                     case 4 -> {
@@ -151,16 +162,84 @@
                             toggleBottomHeaterOn();
                         }
                         else {
-                            toggleTopHeaterOff();
+                            toggleBottomHeaterOff();
+                        }
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(4,isBottomHeaterOn ? 1 : 2)));
+
+                    }
+
+                    case 5 -> {
+                        // send the temp back
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(
+                                5,
+                                numberTempButtonPressedIncrement,
+                                numberTempButtonPressedDecrement))
+                        );
+
+                        numberTempButtonPressedDecrement = 0;
+                        numberTempButtonPressedIncrement = 0;
+                    }
+
+                    case 6 -> {
+                        // send back the time
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(
+                                6,
+                                numberTimeButtonPressedIncrement,
+                                numberTimeButtonPressedDecrement))
+                        );
+
+                        numberTimeButtonPressedDecrement = 0;
+                        numberTimeButtonPressedIncrement = 0;
+                    }
+                    // toggle door
+                    case 7 -> {
+                        toggleDoor();
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(7, doorStatus ? 1 : 2)));
+
+                    }
+                    // kill the heaters and send a message back
+                    case 8 -> {
+
+                        killHeaters();
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(8)));
+                    }
+
+                    // sets the display to a predetermined time and temp
+                    case 9 ->{
+
+                        setDisplay(10,0,375);
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(9)));
+                    }
+
+                    // this is sending back a message to the simulator saying that we cleared the display
+                    case 10 ->{
+
+                        clearDisplay();
+
+                        sendMessage(new ArrayList<Integer>(Arrays.asList(10)));
+                    }
+
+
+                    // this is sending back the status of the cook types as requested by the simulator
+                    case 11 ->{
+                        switch (sett) {
+                            case setting.BAKE -> sendMessage(new ArrayList<Integer>(Arrays.asList(11, 1)));
+                            case setting.BROIL -> sendMessage(new ArrayList<Integer>(Arrays.asList(11, 2)));
+                            case setting.ROAST -> sendMessage(new ArrayList<Integer>(Arrays.asList(11, 3)));
+                            case setting.NOSETT -> sendMessage(new ArrayList<Integer>(Arrays.asList(11, 4)));
                         }
                     }
-                    //toggle door
-                    case 5 -> {
-                        toggleDoor();
-                    }
-                    //kill the heaters
-                    case 6 -> {
-                        killHeaters();
+
+                    // this is sending back the status of the presets as requested by the simulator
+                    case 12 ->{
+                        switch(pre){
+                            case pre.Nuggets-> sendMessage(new ArrayList<Integer>(Arrays.asList(12,1)));
+                            case pre.Pizza -> sendMessage(new ArrayList<Integer>(Arrays.asList(12,2)));
+                        }
                     }
                 }
             }
@@ -248,7 +327,7 @@
             root.setCenter(mainSection);
 
             // turn off all the buttons initially
-            turnOffAllButtons();
+//            turnOffAllButtons();
 
 
             // just setting the scene and the primary stage
@@ -336,12 +415,11 @@
          */
         private void setupHandleCLick(Rectangle handle){
             handle.setOnMouseClicked(event -> {
-                toggleDoor();
-                try {
-                    sendMessage(2);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+             if(doorStatus){
+                 doorStatus = false;
+             }else{
+                 doorStatus = true;
+             }
             });
         }
 
@@ -352,14 +430,16 @@
             if(doorStatus){
                 System.out.println("Door is now Closed");
                 doorStatus = false;
-                turnOnAllButtons();
-                door.setFill(Color.BLACK);
+
+                //door.setFill(Color.BLACK);
+               // window.setFill(Color.LIGHTGRAY);
             }else
             {
                 System.out.println("Door is now Open");
-                turnOffAllButtons();
+
                 doorStatus = true;
-                door.setFill(Color.HOTPINK);
+                //door.setFill(Color.TRANSPARENT);
+                //window.setFill(Color.TRANSPARENT);
 
             }
         }
@@ -488,6 +568,38 @@
             return timeLabel;
         }
 
+    /**
+     * set the display from the simulator
+     * @param Min
+     * @param sec
+     * @param temp
+     */
+        private void setDisplay(int Min,int sec, int temp){
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    currentTimeSeconds.set(sec);
+                    currentTimeMinutes.set(Min);
+                    currentTempF.set(temp);
+                }
+            });
+
+        }
+
+    /**
+     * clear the Display if told by simulator
+     */
+    private void clearDisplay(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                currentTempF.set(0);
+                currentTimeMinutes.set(0);
+                currentTimeSeconds.set(0);
+            }
+        });
+    }
+
         /**
          * Method to set the time text when needed
          * @return the time text
@@ -584,14 +696,15 @@
         private void handleBakeButtonClick(Button bakeButton){
             bakeButton.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(9);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    sendMessage(new ArrayList<Integer>(Arrays.asList(9)));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 sett = setting.BAKE;
-                System.out.println("Clicked on the bake button");
+                pre = preset.None;
+                //System.out.println("Clicked on the bake button");
 
             });
         }
@@ -603,14 +716,15 @@
         private void handleBroilButtonClick(Button broilButton){
             broilButton.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(10);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+////                    sendMessage(new ArrayList<Integer>(Arrays.asList(10)));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 sett = setting.BROIL;
-                System.out.println("Clicked on the broil button");
+                pre = preset.None;
+                //System.out.println("Clicked on the broil button");
             });
         }
 
@@ -621,14 +735,15 @@
         private void handleRoastButtonClick(Button roastButton){
             roastButton.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(8);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    sendMessage(new ArrayList<Integer>(Arrays.asList(8)));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 sett = setting.ROAST;
-                System.out.println("Clicked on the roast button");
+                pre = preset.None;
+                //System.out.println("Clicked on the roast button");
             });
         }
 
@@ -640,7 +755,7 @@
             // set up the button for the preheat function
             Button pizza = new Button("Pizza");
             allButtons.add(pizza);
-            Button nuggets= new Button("Nuggets");
+            Button nuggets = new Button("Nuggets");
             allButtons.add(nuggets);
 
             pizza.setStyle("-fx-font-family: 'Comic Sans MS'");
@@ -662,31 +777,33 @@
          * Method to handle the click on the pre-het button on our simulation
          * @param pizza and nuggets the time button
          */
-        private void handlePreButtonClick(Button pizza,Button nuggets){
+        private void handlePreButtonClick(Button pizza, Button nuggets){
             pizza.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(11);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    sendMessage(new ArrayList<Integer>(Arrays.asList(11)));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
-                sett = setting.BAKE;
-                currentTimeMinutes.set(15);
-                currentTempF.set(375);
+//                sett = setting.BAKE;
+                pre = preset.Pizza;
+                //currentTimeMinutes.set(15);
+                //currentTempF.set(375);
 
             });
             nuggets.setOnMouseClicked(event -> {
 
-                try {
-                    sendMessage(12);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    sendMessage(new ArrayList<Integer>(Arrays.asList(12)));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
-                sett = setting.ROAST;
-                currentTimeMinutes.set(10);
-                currentTempF.set(400);
+//                sett = setting.ROAST;
+                pre = preset.Nuggets;
+                //currentTimeMinutes.set(10);
+                //currentTempF.set(400);
             });
         }
 
@@ -719,7 +836,7 @@
             stopButton.setOnMousePressed(event -> {
 
                 try {
-                    sendMessage(14);
+                    sendMessage(new ArrayList<Integer>(Arrays.asList(14)));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -729,12 +846,12 @@
                 if(timesPressed == 1)
                 {
                     System.out.println("Clicked on the stop button");
-                    handleStop();
+                    //handleStop();
                     //Pause the timer
                 }
                 else if (timesPressed == 2)
                 {
-                    handleClear();
+                    //handleClear();
                 }
                 //TODO: need to send info over the socket about this
                 //TODO: first click is stop, and second click is clear
@@ -755,8 +872,6 @@
         private void handleClear() {
 
             System.out.println("Clicked on the clear button");
-            toggleBottomHeaterOff();
-            toggleTopHeaterOff();
             currentTempF.set(0); // TODO: Temp decrease over time eventually
             currentTimeMinutes.set(0);
             currentTimeSeconds.set(0);
@@ -795,12 +910,12 @@
             startButton.setOnMouseClicked(event -> {
 
                 try {
-                    sendMessage(13);
+                    sendMessage(new ArrayList<Integer>(Arrays.asList(13)));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                startButton();
+                //startButton();
             });
         }
         private void startButton(){
@@ -932,26 +1047,28 @@
                 System.out.println("Clicked on the increment button");
                 if (isOnTime) {
 
-                    try {
-                        sendMessage(6);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    numberTimeButtonPressedIncrement++;
+//                    try {
+//                        sendMessage(6);
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
-                    currentTimeMinutes.set(currentTimeMinutes.get() + 1);
+                    //currentTimeMinutes.set(currentTimeMinutes.get() + 1);
                 }
                 else if(isOnTemp){
 
-                    try {
-                        sendMessage(4);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    numberTempButtonPressedIncrement++;
+//                    try {
+//                        sendMessage(4);
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
                     // the max temp is 500
-                    if (currentTempF.get() < 500){
-                        currentTempF.set(currentTempF.get() + 15);
-                    }
+                    //if (currentTempF.get() < 500){
+                     //   currentTempF.set(currentTempF.get() + 15);
+                   // }
                 }
                 timesPressed = 0;
             });
@@ -961,7 +1078,7 @@
         /**
          * Method to handle the click on the broil button on our simulation
          * @param
-         * PolButton the time button
+         * decrementButton the time button
          */
         private void handleDecrementButtonClick(Polygon decrementButton){
             decrementButton.setOnMouseClicked(event -> {
@@ -971,29 +1088,33 @@
                 System.out.println("Clicked on the decrement button");
                 if(isOnTime){
 
-                    try {
-                        sendMessage(7);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    numberTimeButtonPressedDecrement++;
+
+//                    try {
+//                        sendMessage(7);
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
                     // the min is always 0
-                    if (currentTimeMinutes.get() != 0){
-                        currentTimeMinutes.set(currentTimeMinutes.get() - 1);
-                    }
+                    //if (currentTimeMinutes.get() != 0){
+                       // currentTimeMinutes.set(currentTimeMinutes.get() - 1);
+                  //  }
                 }
                 else if (isOnTemp){
 
-                    try {
-                        sendMessage(5);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    numberTempButtonPressedDecrement++;
+
+//                    try {
+//                        sendMessage(5);
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
 
                     // the min is always 0
-                    if (currentTempF.get() != 0){
-                        currentTempF.set(currentTempF.get() - 15);
-                    }
+                   // if (currentTempF.get() != 0){
+                    //    currentTempF.set(currentTempF.get() - 15);
+                  //  }
                 }
                 timesPressed = 0;
             });
@@ -1045,12 +1166,7 @@
          */
         private void handlePowerButtonClicks(Circle powerButton){
             powerButton.setOnMouseClicked(event -> {
-                try {
-                    sendMessage(1);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                pressPower(powerButton);
+               pressPower(powerButton);
             });
         }
 
@@ -1060,9 +1176,6 @@
          */
         private void handleLightButtonClicks(Circle lightButton){
             lightButton.setOnMouseClicked(event -> {
-
-
-                
                 // Light
                 // es not turn on after
                 if(!isPowerOn){
@@ -1070,17 +1183,14 @@
                 }else{
                     if(!isLightOn)
                     {
+                        System.out.println("Setting light to true");
                         isLightOn = true;
+                        lightButton.setFill(Color.GREEN);
                     }else{
+                        System.out.println("Setting light to false");
                         isLightOn = false;
+                        lightButton.setFill(Color.BLACK);
                     }
-                        pressLight(lightButton);
-
-                }
-                try {
-                    sendMessage(3);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             });
         }
@@ -1096,18 +1206,18 @@
                 // turn the power off and disable all the buttons
                 powerButton.setFill(Color.BLACK);
                 isPowerOn = false;
-                turnOffAllButtons();
+//                turnOffAllButtons();
                 // if the light is on turn it off
-                if (isLightOn){
-                    toggleLight();
-                    lightButton.setFill(Color.BLACK);
-                }
+//                if (isLightOn){
+//                    toggleLight();
+//                    lightButton.setFill(Color.BLACK);
+//                }
             }
             else {
                 System.out.println("Power On");
                 powerButton.setFill(Color.GREEN);
                 isPowerOn = true;
-                turnOnAllButtons();
+//                turnOnAllButtons();
             }
 
             timesPressed = 0;
@@ -1133,15 +1243,16 @@
          * Method to turn on/off the light depending on the message from socket.
          */
         private void toggleLight(){
+
             if (!isLightOn) {
                 window.setFill(Color.LIGHTYELLOW);
+                lightButton.setFill(Color.GREEN);
                 isLightOn = true;
-
-            }else
-            {
+            }
+            else {
                 window.setFill(Color.LIGHTGRAY);
+                lightButton.setFill(Color.BLACK);
                 isLightOn = false;
-
             }
         }
 
