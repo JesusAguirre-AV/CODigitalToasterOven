@@ -17,6 +17,8 @@ public class Simulator {
     public SimulatorSocketClient socketClient;
     int cookTime = 300;
     int cookTemp = 350;
+    int currentTime = cookTime;
+    int timeIncrement = 0;
     int cookMode = 1;
     TimerTask task = new TimerTask() {
         @Override
@@ -39,6 +41,8 @@ public class Simulator {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            timeIncrement++;
+            currentTime = cookTime - timeIncrement;
             System.out.println("The current cavity temperature is: " + cavityTemp);
 
             if(!threadLive){
@@ -65,6 +69,8 @@ public class Simulator {
             lock.notifyAll();
         }
     }
+
+
     interruptCheckThread interrupter = new interruptCheckThread();
 
     int cavityTemp = 70;
